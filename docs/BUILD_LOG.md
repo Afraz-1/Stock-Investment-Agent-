@@ -136,3 +136,22 @@ project's GitHub `main` branch.
 - **Boundary:** The adapter is not connected to an API route or PostgreSQL, and
   does not sync with INDmoney or generate investment recommendations. Yahoo
   data is for personal research under its terms of use.
+
+## Step 10 — Read-only stock research routes
+
+- **Purpose:** Make the Step 9 provider accessible in the API and interactive
+  FastAPI documentation.
+- **Files:** `backend/app/api/__init__.py`, `backend/app/api/v1/__init__.py`,
+  `backend/app/api/v1/stocks.py`, `backend/app/main.py`,
+  `backend/tests/test_stock_routes.py`, and `README.md`.
+- **How it works:** Search, exact-listing profile, and inclusive daily-price
+  routes use a replaceable `MarketDataProvider` dependency. FastAPI validates
+  exchanges, symbols, limits, and dates. Missing profiles return 404; invalid
+  requests return 422; provider failures return a sanitized 502. Results keep
+  their source and retrieval time.
+- **Verification:** 26 automated tests passed. Offline route tests cover
+  request validation, exchange identity, missing profiles, returned bars, and
+  provider failures. OpenAPI listed all three routes, and a live HTTP search
+  returned TCS listings on NSE and BSE.
+- **Boundary:** The routes do not write market data to PostgreSQL, connect to
+  INDmoney, place trades, or generate recommendations.

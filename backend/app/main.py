@@ -2,13 +2,15 @@
 
 from typing import Literal
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from app.api.v1.stocks import router as stocks_router
 from app.core.config import Settings
 from app.db.connection import create_database_engine, database_is_ready
 from app.db.session import create_session_factory
+from app.services.market_data.provider import MarketDataError
 
 
 class HealthResponse(BaseModel):
@@ -34,6 +36,16 @@ app = FastAPI(
     debug=settings.debug,
 )
 app.state.session_factory = create_session_factory(engine)
+app.include_router(stocks_router)
+
+
+@app.exception_handler(MarketDataError)
+async def market_data_error_handler(request: Request, exc: MarketDataError) -> JSONResponse:
+    """Expose an upstream failure without leaking provider internals to clients."""
+
+    return JSONResponse(
+        status_code=502, content={"detail": "Market data provider request failed"}
+    )
 
 
 @app.get("/api/v1/health", response_model=HealthResponse, tags=["health"])

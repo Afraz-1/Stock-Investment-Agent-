@@ -149,3 +149,22 @@ The adapter can also be called directly from Python; it is not exposed through
 an API route or saved in PostgreSQL yet. Yahoo data via yfinance is intended for
 [personal research use](https://github.com/ranaroussi/yfinance); verify figures
 against your brokerage before making a trade.
+
+## Step 10: Stock research API routes
+
+`backend/app/api/v1/stocks.py` exposes the market-data provider through three
+read-only endpoints:
+
+- `GET /api/v1/stocks/search?q=TCS&limit=10` finds NSE/BSE listings.
+- `GET /api/v1/stocks/NSE/TCS/profile` shows one company's profile.
+- `GET /api/v1/stocks/NSE/TCS/prices?start=2026-11-02&end=2026-11-06`
+  returns daily OHLCV bars for an inclusive date range.
+
+Start the API from `backend` with `python -m uvicorn app.main:app --reload`, then
+open <http://127.0.0.1:8000/docs> to try these routes. Search results and price
+history include their provider source and retrieval time. An unknown profile
+returns HTTP 404; invalid inputs return HTTP 422; a provider failure returns
+HTTP 502. An empty price range returns a normal response with `no_data`.
+
+These routes call Yahoo Finance for personal research. They do not use the
+PostgreSQL tables, sync INDmoney, place trades, or make recommendations.
