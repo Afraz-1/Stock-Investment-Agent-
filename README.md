@@ -133,3 +133,19 @@ available. Invalid OHLCV bars and missing timezone information are rejected.
 
 This step only defines the contract. It does not call Yahoo Finance or add stock
 API routes. The next adapter will implement this interface.
+
+## Step 9: Yahoo Finance adapter
+
+`backend/app/services/market_data/yahoo.py` implements the provider contract
+using `yfinance`. Search returns NSE and BSE equity listings, profiles are
+checked against the exact exchange symbol, and daily OHLCV prices are returned
+in the normalized Step 8 format. A requested end date is included even though
+Yahoo's API treats its end date as exclusive. The adapter asks yfinance for
+dividend-adjusted prices and reports provider failures separately from missing
+data. Results include their Yahoo source and retrieval time.
+
+From `backend`, use the project virtual environment to run `python -m pytest -q`.
+The adapter can also be called directly from Python; it is not exposed through
+an API route or saved in PostgreSQL yet. Yahoo data via yfinance is intended for
+[personal research use](https://github.com/ranaroussi/yfinance); verify figures
+against your brokerage before making a trade.

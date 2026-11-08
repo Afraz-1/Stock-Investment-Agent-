@@ -116,3 +116,23 @@ project's GitHub `main` branch.
   15 tests passed in total.
 - **Boundary:** There is no Yahoo adapter, network call, stock route, or saved
   market data yet.
+
+## Step 9 — Yahoo Finance market-data adapter
+
+- **Purpose:** Fetch Indian equity research data through the Step 8 contract.
+- **Files:** `backend/app/services/market_data/yahoo.py`,
+  `backend/tests/test_yahoo_provider.py`, `backend/pyproject.toml`, and `README.md`.
+- **How it works:** `YahooMarketDataProvider` translates NSE/BSE listing keys to
+  Yahoo symbols, searches equity listings, checks exact-listing profiles, and
+  converts daily prices to validated OHLCV bars. It records source and retrieval
+  time, requests dividend-adjusted prices, and distinguishes missing data from
+  provider failures. It adds one day to the requested end date because Yahoo's
+  end parameter is exclusive.
+- **Verification:** Offline tests cover exchange identity, profile mismatch,
+  missing listings, inclusive date handling, valid bars, invalid bars, and
+  provider failure; 22 tests passed in total. Live personal-use checks found
+  TCS on NSE and BSE, returned an NSE profile, and returned five daily bars for
+  2–6 November 2026.
+- **Boundary:** The adapter is not connected to an API route or PostgreSQL, and
+  does not sync with INDmoney or generate investment recommendations. Yahoo
+  data is for personal research under its terms of use.

@@ -14,6 +14,7 @@ dependencies = [
     "psycopg[binary]==3.3.7",
     "SQLAlchemy==2.0.55",
     "uvicorn==0.34.2",
+    "yfinance==1.8.0",
 ]
 
 [project.optional-dependencies]
