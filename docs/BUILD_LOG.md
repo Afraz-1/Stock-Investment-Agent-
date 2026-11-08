@@ -155,3 +155,22 @@ project's GitHub `main` branch.
   returned TCS listings on NSE and BSE.
 - **Boundary:** The routes do not write market data to PostgreSQL, connect to
   INDmoney, place trades, or generate recommendations.
+
+## Step 11 — Daily price storage schema
+
+- **Purpose:** Prepare PostgreSQL to store provider price history per exact
+  exchange listing.
+- **Files:** `backend/app/models/daily_price.py`, `backend/app/models/__init__.py`,
+  `backend/alembic/versions/20261108_0003_add_daily_prices.py`,
+  `backend/tests/test_daily_price.py`, and `README.md`.
+- **How it works:** `DailyPrice` links to `Security` and stores trading day,
+  OHLCV, currency, provider, adjustment basis, source retrieval time, and an
+  optional source URL. A unique key separates providers and adjustment types.
+  Database checks reject invalid prices, negative volume, and unknown
+  adjustment types. The foreign key prevents orphan price rows.
+- **Verification:** 32 automated tests passed. Migration `20261108_0003` was
+  applied to local PostgreSQL; `alembic check` found no schema differences.
+  A live ORM insert received a generated ID, then was rolled back. The table
+  has no saved price rows.
+- **Boundary:** No ingestion service writes Yahoo results into this table yet.
+  Existing stock routes still read the provider directly.

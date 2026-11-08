@@ -168,3 +168,19 @@ HTTP 502. An empty price range returns a normal response with `no_data`.
 
 These routes call Yahoo Finance for personal research. They do not use the
 PostgreSQL tables, sync INDmoney, place trades, or make recommendations.
+
+## Step 11: Daily price table
+
+`backend/app/models/daily_price.py` defines the `daily_prices` PostgreSQL
+table. Each row belongs to one `Security` listing and one trading day. It
+stores OHLCV values, currency, provider, price adjustment, source retrieval
+time, and an optional source URL. A unique constraint prevents duplicate rows
+for the same listing, day, provider, and adjustment. Database checks reject
+non-positive or out-of-range OHLC values and negative volume.
+
+Apply the migration from `backend` with
+`python -m alembic upgrade head`. In pgAdmin, the table is under
+`equityiq > Schemas > public > Tables > daily_prices`. You can query it with
+`SELECT * FROM daily_prices ORDER BY trading_day DESC;`. The table is empty
+until a later ingestion step saves provider results. The live migration reached
+revision `20261108_0003` and passed `python -m alembic check`.
