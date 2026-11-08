@@ -174,3 +174,23 @@ project's GitHub `main` branch.
   has no saved price rows.
 - **Boundary:** No ingestion service writes Yahoo results into this table yet.
   Existing stock routes still read the provider directly.
+
+## Step 12 — Daily price ingestion service
+
+- **Purpose:** Connect the market-data provider to the daily price table for
+  securities already registered in PostgreSQL.
+- **Files:** `backend/app/services/market_data/ingestion.py`,
+  `backend/app/models/daily_price.py`, `backend/tests/test_price_ingestion.py`,
+  and `README.md`.
+- **How it works:** `ingest_daily_prices` loads the exact `Security` and
+  `Exchange`, fetches an inclusive date range, checks listing identity,
+  currency, and dates, then upserts the bars. Repeat fetches update existing
+  rows, while an older retrieval cannot replace a newer one. It leaves commit
+  or rollback to the caller.
+- **Verification:** 39 automated tests passed. Offline tests cover initial
+  storage, idempotent refresh, stale results, mismatched data, missing listings,
+  provider failure, and rollback. A live PostgreSQL transaction fetched and
+  stored five Yahoo TCS bars for 2–6 November 2026, then was rolled back.
+- **Boundary:** No route, scheduler, or stock-registration flow calls this
+  service yet. The local database has no persisted company, exchange,
+  security, or price rows from verification.

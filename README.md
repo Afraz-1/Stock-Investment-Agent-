@@ -184,3 +184,23 @@ Apply the migration from `backend` with
 `SELECT * FROM daily_prices ORDER BY trading_day DESC;`. The table is empty
 until a later ingestion step saves provider results. The live migration reached
 revision `20261108_0003` and passed `python -m alembic check`.
+
+## Step 12: Daily price ingestion service
+
+`backend/app/services/market_data/ingestion.py` can fetch daily bars for a
+`Security` already registered in PostgreSQL and save them to `daily_prices`.
+It checks that the provider returned the requested exchange listing, currency,
+and date range. An upsert refreshes existing rows without duplicates and does
+not replace a newer retrieval with an older one. The service returns the number
+of bars received; the caller must explicitly commit or roll back the session.
+
+For example, given an existing `security_id` and SQLAlchemy session:
+
+```python
+count = ingest_daily_prices(db, YahooMarketDataProvider(), security_id, start, end)
+db.commit()
+```
+
+There is no HTTP endpoint or scheduled ingestion job yet. The live verification
+fetched and inserted five TCS bars inside a transaction, then rolled it back;
+the local application tables remain empty.

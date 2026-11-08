@@ -10,6 +10,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Identity,
+    Integer,
     Numeric,
     String,
     UniqueConstraint,
@@ -47,7 +48,10 @@ class DailyPrice(Base):
         ),
     )
 
-    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    # SQLite needs an INTEGER primary key for offline tests to autogenerate IDs.
+    id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"), Identity(), primary_key=True
+    )
     security_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("securities.id", ondelete="RESTRICT"), nullable=False
     )
