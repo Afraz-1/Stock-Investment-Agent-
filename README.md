@@ -121,3 +121,15 @@ Run `python -m alembic upgrade head` from `backend` to apply revision
 `20261107_0002`. In pgAdmin, the `public` schema now also contains `exchanges`
 and `securities`. Both are empty; verification inserts were rolled back. The
 market-data provider and stock API routes have not been added yet.
+
+## Step 8: Market-data provider contract
+
+`backend/app/services/market_data/provider.py` defines the operations every
+market-data adapter must support: search listings, fetch one exact listing's
+profile, and fetch daily prices. `schemas.py` defines the normalized results.
+Every listing uses both exchange and symbol. Results carry provider and retrieval
+time; price history declares its adjustment basis and a reason when no bars are
+available. Invalid OHLCV bars and missing timezone information are rejected.
+
+This step only defines the contract. It does not call Yahoo Finance or add stock
+API routes. The next adapter will implement this interface.

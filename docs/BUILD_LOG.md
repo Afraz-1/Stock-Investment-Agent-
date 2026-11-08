@@ -3,6 +3,8 @@
 This log records each completed coding step. Before stopping after a future step,
 record its purpose, changed files, how the pieces connect, verification, and what
 remains. Commands below run from `backend` unless stated otherwise.
+Starting with Step 8, each completed step is also committed and pushed to the
+project's GitHub `main` branch.
 
 ## Step 1 — FastAPI foundation
 
@@ -97,3 +99,20 @@ remains. Commands below run from `backend` unless stated otherwise.
   rows remain.
 - **Boundary:** No exchange or security records have been saved, and no stock
   search or market-data API has been added.
+
+## Step 8 — Market-data provider contract
+
+- **Purpose:** Define one stable shape for market data before implementing a
+  specific external provider.
+- **Files:** `backend/app/services/market_data/provider.py`,
+  `backend/app/services/market_data/schemas.py`,
+  `backend/tests/test_market_data_contract.py`, and `README.md`.
+- **How it works:** Every provider must implement search, exact-listing profile,
+  and daily price methods. A `SecurityKey` includes exchange and symbol. Results
+  include provenance and timezone-aware retrieval time. Price history declares
+  its adjustment basis and an explicit reason when no data is available.
+- **Verification:** Offline validation tests reject missing exchange identity,
+  naive timestamps, invalid OHLCV data, and unexplained empty price history;
+  15 tests passed in total.
+- **Boundary:** There is no Yahoo adapter, network call, stock route, or saved
+  market data yet.
