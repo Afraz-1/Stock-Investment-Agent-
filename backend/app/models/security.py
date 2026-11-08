@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Identity,
+    Integer,
     String,
     UniqueConstraint,
     func,
@@ -26,7 +27,9 @@ class Security(Base):
         UniqueConstraint("exchange_id", "symbol", name="uq_securities_exchange_symbol"),
     )
 
-    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"), Identity(), primary_key=True
+    )
     company_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("companies.id", ondelete="RESTRICT"), nullable=False, index=True
     )

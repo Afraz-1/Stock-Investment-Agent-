@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, Identity, String, UniqueConstraint, func
+from sqlalchemy import BigInteger, DateTime, Identity, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -14,7 +14,9 @@ class Exchange(Base):
     __tablename__ = "exchanges"
     __table_args__ = (UniqueConstraint("code", name="uq_exchanges_code"),)
 
-    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"), Identity(), primary_key=True
+    )
     code: Mapped[str] = mapped_column(String(16), nullable=False)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     country_code: Mapped[str] = mapped_column(String(2), nullable=False)

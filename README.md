@@ -204,3 +204,26 @@ db.commit()
 There is no HTTP endpoint or scheduled ingestion job yet. The live verification
 fetched and inserted five TCS bars inside a transaction, then rolled it back;
 the local application tables remain empty.
+
+## Step 13: Register a stock listing locally
+
+`backend/app/services/market_data/registration.py` registers an NSE or BSE
+security and its company. The local-only command below creates a company and
+listing, or returns the existing listing when run again:
+
+```powershell
+cd backend
+python -m app.cli.register_stock --exchange NSE --symbol TCS --legal-name "Tata Consultancy Services Limited" --isin INE467B01029
+```
+
+The [NSE TCS page](https://www.nseindia.com/get-quote/equity/TCS/Tata-Consultancy-Services-Limited)
+confirms this example's legal name, symbol, and ISIN. To register another
+exchange listing for the same company, pass `--company-id` with the printed
+company ID instead of `--legal-name`. Check the legal name and identifier
+before registering a different stock; the command does not infer them from
+Yahoo data. Registration does not mean a stock is held or recommended.
+
+On this development database, the command registered one TCS NSE listing.
+In pgAdmin, `companies`, `exchanges`, and `securities` each contain one row;
+`daily_prices` remains empty. The local security ID is `5` (earlier rolled-back
+test inserts advanced PostgreSQL's ID sequence). No new migration was needed.

@@ -194,3 +194,26 @@ project's GitHub `main` branch.
 - **Boundary:** No route, scheduler, or stock-registration flow calls this
   service yet. The local database has no persisted company, exchange,
   security, or price rows from verification.
+
+## Step 13 — Local stock registration
+
+- **Purpose:** Create a verified company and exchange listing so the Step 12
+  price ingestion service has a real security ID to use.
+- **Files:** `backend/app/services/market_data/registration.py`,
+  `backend/app/cli/__init__.py`, `backend/app/cli/register_stock.py`,
+  `backend/app/models/company.py`, `backend/app/models/exchange.py`,
+  `backend/app/models/security.py`, `backend/tests/test_registration.py`,
+  and `README.md`.
+- **How it works:** A local command accepts NSE/BSE, a symbol, and either a
+  verified legal name for a new company or an existing company ID for another
+  listing. The service creates or reuses the exchange and listing, checks
+  conflicting identity details, and leaves commit to the caller. The CLI
+  commits on success. SQLite-only ID variants support offline tests without
+  changing PostgreSQL's BIGINT schema.
+- **Verification:** 47 automated tests passed; `alembic check` found no schema
+  differences. The command registered TCS on NSE using name and ISIN checked
+  against NSE's public listing. Repeating it returned the same company ID `5`
+  and security ID `5`. PostgreSQL has one company, exchange, and security row,
+  and zero price rows.
+- **Boundary:** Registration is available only from the local terminal. It
+  does not fetch or save prices, represent a holding, or recommend a stock.
