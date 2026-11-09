@@ -217,3 +217,21 @@ project's GitHub `main` branch.
   and zero price rows.
 - **Boundary:** Registration is available only from the local terminal. It
   does not fetch or save prices, represent a holding, or recommend a stock.
+
+## Step 14 — Local daily price import command
+
+- **Purpose:** Make the Step 12 ingestion service usable for a registered
+  stock without adding a public database-write endpoint.
+- **Files:** `backend/app/cli/ingest_prices.py`,
+  `backend/tests/test_ingest_prices_cli.py`, and `README.md`.
+- **How it works:** The command accepts an NSE/BSE symbol and inclusive date
+  range, resolves the registered security ID, calls the Yahoo provider through
+  `ingest_daily_prices`, and commits the transaction. Invalid input, missing
+  listings, provider failure, and database failure produce a nonzero exit.
+- **Verification:** 52 automated tests passed. Offline CLI tests cover commit,
+  repeat import without duplicates, invalid dates, missing listings, and
+  provider failure. The live command imported TCS NSE prices for 2–6 November
+  2026, then ran again; PostgreSQL retained exactly five rows. No schema
+  migration was needed.
+- **Boundary:** The command is local and manual. API routes still read Yahoo
+  directly; there is no scheduler, recommendation, or trade execution.

@@ -201,9 +201,9 @@ count = ingest_daily_prices(db, YahooMarketDataProvider(), security_id, start, e
 db.commit()
 ```
 
-There is no HTTP endpoint or scheduled ingestion job yet. The live verification
-fetched and inserted five TCS bars inside a transaction, then rolled it back;
-the local application tables remain empty.
+There is no HTTP endpoint or scheduled ingestion job yet. At the end of Step 12,
+the live verification fetched and inserted five TCS bars inside a transaction,
+then rolled it back; the local application tables were still empty.
 
 ## Step 13: Register a stock listing locally
 
@@ -224,6 +224,31 @@ before registering a different stock; the command does not infer them from
 Yahoo data. Registration does not mean a stock is held or recommended.
 
 On this development database, the command registered one TCS NSE listing.
-In pgAdmin, `companies`, `exchanges`, and `securities` each contain one row;
-`daily_prices` remains empty. The local security ID is `5` (earlier rolled-back
+At the end of Step 13, `companies`, `exchanges`, and `securities` each contained
+one row; `daily_prices` was empty. The local security ID is `5` (earlier rolled-back
 test inserts advanced PostgreSQL's ID sequence). No new migration was needed.
+
+## Step 14: Save daily prices from the local terminal
+
+The local command `backend/app/cli/ingest_prices.py` finds a registered listing
+by exchange and symbol, calls the Step 12 ingestion service, and commits the
+returned price bars. For the registered TCS example, run from `backend`:
+
+```powershell
+python -m app.cli.ingest_prices --exchange NSE --symbol TCS --start 2026-11-02 --end 2026-11-06
+```
+
+Both dates are inclusive. The command reports bars received; repeating it
+refreshes existing rows without creating duplicates. In pgAdmin, inspect:
+
+```sql
+SELECT trading_day, open, high, low, close, volume, provider, adjustment
+FROM daily_prices
+WHERE security_id = 5
+ORDER BY trading_day;
+```
+
+The local database now has five TCS price rows for this example. This is
+historical research data, not an INDmoney holding, trading signal, or order.
+The stock API routes still fetch directly from Yahoo; they do not yet read
+saved prices.
