@@ -9,6 +9,11 @@ From this directory, run `npm install` once and then `npm run dev`. Open
 
 `src/api.ts` defines the responses and fetch calls. `src/App.tsx` handles
 stock selection, date ranges, source selection, My stocks actions, and the visible cards.
+`src/MarketOverview.tsx` renders timestamped NSE gainers and losers from the
+backend; its rows open the research view. `src/theme.css` supplies the page
+theme, while `src/MarketOverview.css` styles the market tables.
+`src/PriceChart.tsx` is loaded on demand, keeping the chart library out of
+the initial JavaScript bundle.
 `src/App.css` and `src/index.css` style the page. `vite.config.ts` forwards
 `/api` requests to the backend during local development.
 

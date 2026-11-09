@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { lazy, Suspense, useEffect, useState, type FormEvent } from "react";
 import {
   Activity,
   ArrowDownRight,
@@ -25,15 +25,6 @@ import {
   X,
 } from "lucide-react";
 import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import {
   ApiError,
   addToWatchlist,
   getPrices,
@@ -43,14 +34,17 @@ import {
   removeFromWatchlist,
   searchStocks,
   type CompanyProfile,
-  type PriceBar,
   type PriceHistory,
   type SearchResult,
   type SecurityKey,
   type StoredPriceHistory,
   type WatchlistEntry,
 } from "./api";
+import MarketOverview from "./MarketOverview";
 import "./App.css";
+import "./theme.css";
+
+const PriceChart = lazy(() => import("./PriceChart"));
 
 type PriceSource = "live" | "saved";
 const initialSecurity: SecurityKey = { exchange_code: "NSE", symbol: "TCS" };
@@ -119,92 +113,6 @@ function retrievedAt(value: string | null | undefined): string {
 function errorMessage(error: unknown): string {
   if (error instanceof ApiError) return error.message;
   return "Could not reach the API. Check that the backend is running.";
-}
-
-function PriceChart({ bars }: { bars: PriceBar[] }) {
-  const data = useMemo(
-    () =>
-      bars.map((bar) => ({
-        trading_day: bar.trading_day,
-        close: Number(bar.close),
-      })),
-    [bars],
-  );
-  if (data.length === 0) {
-    return (
-      <div className="chart-empty">
-        <LineChartIcon size={28} strokeWidth={1.5} />
-        <strong>No price bars in this range</strong>
-        <span>Try another range or switch the data source.</span>
-      </div>
-    );
-  }
-  return (
-    <div
-      className="chart-wrap"
-      role="img"
-      aria-label={`Closing price chart with ${data.length} daily observations`}
-    >
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
-          data={data}
-          margin={{ top: 16, right: 8, left: 0, bottom: 4 }}
-        >
-          <defs>
-            <linearGradient id="priceFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#13a38a" stopOpacity={0.24} />
-              <stop offset="100%" stopColor="#13a38a" stopOpacity={0.01} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid
-            vertical={false}
-            stroke="#e9eef0"
-            strokeDasharray="3 5"
-          />
-          <XAxis
-            dataKey="trading_day"
-            tickFormatter={shortDate}
-            minTickGap={32}
-            tickLine={false}
-            axisLine={false}
-            tick={{ fill: "#87939b", fontSize: 11 }}
-            dy={10}
-          />
-          <YAxis
-            domain={["auto", "auto"]}
-            tickFormatter={(value: number) => `₹${integer(Math.round(value))}`}
-            tickLine={false}
-            axisLine={false}
-            tick={{ fill: "#87939b", fontSize: 11 }}
-            width={75}
-          />
-          <Tooltip
-            labelFormatter={(label) => longDate(String(label))}
-            formatter={(value) => [money(Number(value)), "Close"]}
-            contentStyle={{
-              border: "1px solid #e4ebea",
-              borderRadius: 12,
-              boxShadow: "0 12px 30px rgba(20,39,48,.1)",
-            }}
-          />
-          <Area
-            type="monotone"
-            dataKey="close"
-            stroke="#0d8e77"
-            strokeWidth={2.5}
-            fill="url(#priceFill)"
-            dot={false}
-            activeDot={{
-              r: 5,
-              fill: "#0d8e77",
-              stroke: "#fff",
-              strokeWidth: 2,
-            }}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
 }
 
 function App() {
@@ -317,6 +225,7 @@ function App() {
     setWatchlistMessage(null);
     setWatchlistError(null);
     setMobileMenu(false);
+    document.getElementById("research")?.scrollIntoView({ behavior: "smooth" });
   }
 
   async function addCurrentStock(event: FormEvent<HTMLFormElement>) {
@@ -429,12 +338,23 @@ function App() {
             <X size={19} />
           </button>
         </div>
-        <div className="sidebar-section-label">WORKSPACE</div>
+        <div className="sidebar-section-label">YOUR WORKSPACE</div>
         <nav className="sidebar-nav" aria-label="Main navigation">
-          <div className="nav-item nav-active">
-            <LineChartIcon size={18} /> Stock explorer{" "}
+          <a
+            className="nav-item nav-active"
+            href="#market-overview"
+            onClick={() => setMobileMenu(false)}
+          >
+            <BarChart3 size={18} /> Market overview{" "}
             <span className="nav-active-dot" />
-          </div>
+          </a>
+          <a
+            className="nav-item nav-link"
+            href="#research"
+            onClick={() => setMobileMenu(false)}
+          >
+            <LineChartIcon size={18} /> Stock research
+          </a>
           <a
             className="nav-item nav-link"
             href="#my-stocks"
@@ -454,10 +374,10 @@ function App() {
             <div className="sidebar-note-icon">
               <ShieldCheck size={18} />
             </div>
-            <strong>Built for careful research</strong>
+            <strong>Context for better decisions</strong>
             <p>
-              Prices are context for learning. This workspace does not place
-              trades or promise returns.
+              Real data, clear sources, and room to think. This workspace does
+              not place trades.
             </p>
           </div>
           <div className="sidebar-version">
@@ -476,7 +396,7 @@ function App() {
             <Menu size={21} />
           </button>
           <div className="breadcrumb">
-            Workspace <ChevronRight size={14} /> <strong>Stock explorer</strong>
+            EquityIQ <ChevronRight size={14} /> <strong>Market overview</strong>
           </div>
           <div className="topbar-right">
             <span className="topbar-local">
@@ -488,22 +408,39 @@ function App() {
           </div>
         </header>
         <main className="main-content">
-          <section className="intro-section">
+          <section className="intro-section premium-hero" id="top">
             <div className="eyebrow">
               <span /> INDIA EQUITIES · NSE & BSE
             </div>
             <div className="intro-heading-row">
               <div>
-                <h1>Clarity before conviction.</h1>
+                <h1>
+                  Invest with context.
+                  <br />
+                  <em>Move with clarity.</em>
+                </h1>
                 <p>
-                  Explore company context, follow price history, and see exactly
-                  where your data comes from.
+                  A considered view of the Indian market. Discover daily movers,
+                  explore businesses, and keep your own research close.
                 </p>
+                <div className="hero-links">
+                  <a href="#market-overview">
+                    Explore the market <ArrowRight size={16} />
+                  </a>
+                  <a href="#research">Research a stock</a>
+                </div>
               </div>
               <div className="intro-illustration" aria-hidden="true">
-                <Activity size={42} strokeWidth={1.3} />
+                <span className="hero-visual-top">EQUITY / INTELLIGENCE</span>
+                <span className="hero-visual-mark">
+                  IQ<span>.</span>
+                </span>
+                <span className="hero-visual-bottom">
+                  RESEARCH FIRST. DECIDE YOURSELF.
+                </span>
               </div>
             </div>
+            <div className="hero-search-label">FIND A COMPANY</div>
             <form className="search-form" onSubmit={onSearch}>
               <Search size={20} aria-hidden="true" />
               <label className="sr-only" htmlFor="stock-search">
@@ -513,7 +450,7 @@ function App() {
                 id="stock-search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search a company or ticker, e.g. TCS"
+                placeholder="Search an NSE or BSE company, e.g. TCS"
                 autoComplete="off"
               />
               <button type="submit" disabled={searching}>
@@ -564,7 +501,21 @@ function App() {
             )}
           </section>
 
-          <section className="company-heading" aria-label="Selected stock">
+          <MarketOverview onSelect={chooseStock} />
+
+          <div className="research-section-heading">
+            <span>02 / DEEP DIVE</span>
+            <h2>
+              Research the business<span>.</span>
+            </h2>
+            <p>Price history and company context for the listing you select.</p>
+          </div>
+
+          <section
+            className="company-heading"
+            id="research"
+            aria-label="Selected stock"
+          >
             <div className="company-heading-main">
               <div className="company-avatar">
                 {selected.symbol.slice(0, 2)}
@@ -814,7 +765,17 @@ function App() {
                   <span>{activeError}</span>
                 </div>
               ) : (
-                <PriceChart bars={activeBars} />
+                <Suspense
+                  fallback={<div className="chart-loading">Loading chart…</div>}
+                >
+                  <PriceChart
+                    bars={activeBars}
+                    shortDate={shortDate}
+                    longDate={longDate}
+                    money={money}
+                    integer={integer}
+                  />
+                </Suspense>
               )}
               <div className="chart-footer">
                 <span>

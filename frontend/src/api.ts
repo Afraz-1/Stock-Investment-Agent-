@@ -72,6 +72,28 @@ export interface RefreshResult {
   bars_received: number;
 }
 
+export interface MarketMover {
+  security: SecurityKey;
+  company_name: string;
+  price: string;
+  previous_close: string;
+  change_percent: string;
+  volume: number;
+  quote_at: string;
+  source_url: string;
+}
+
+export interface MarketMovers {
+  as_of_day: string;
+  latest_quote_at: string;
+  retrieved_at: string;
+  min_market_cap_inr: number;
+  min_day_volume: number;
+  gainers: MarketMover[];
+  losers: MarketMover[];
+  source_url: string;
+}
+
 export class ApiError extends Error {
   status: number;
 
@@ -147,6 +169,10 @@ export function getPrices(
 
 export function getWatchlist(signal?: AbortSignal): Promise<WatchlistEntry[]> {
   return getJson("/api/v1/watchlist", signal);
+}
+
+export function getMarketMovers(signal?: AbortSignal): Promise<MarketMovers> {
+  return getJson("/api/v1/market/movers", signal);
 }
 
 export function addToWatchlist(

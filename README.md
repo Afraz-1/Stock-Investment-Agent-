@@ -5,7 +5,7 @@ The project is being built one step at a time so each part can be understood and
 See [the build log](docs/BUILD_LOG.md) for the purpose, files, and verification
 of each completed step.
 
-## Current local app (Step 16)
+## Current local app (Step 17)
 
 Start PostgreSQL, then run the API in one terminal:
 
@@ -30,6 +30,25 @@ inclusive date range; it never imports new rows. Register and import a stock
 with the Step 13 and 14 local commands below before expecting saved bars.
 The page starts with NSE:TCS as an example. If that listing is not registered,
 the saved tab will have no bars; live lookup can still work.
+
+### Market overview
+
+The landing section shows the five largest daily gainers and losers from a
+**screened NSE universe**, using Yahoo Finance quotes. The screen is limited
+to NSE equities with reported market capitalization of at least ₹10,000 crore
+and daily volume of at least 100,000 shares. The API requests leading
+candidates in both directions, validates exchange/currency/quote fields,
+keeps one latest trading date, and ranks the returned quotes by Yahoo's daily
+percentage change. It caches a result for five minutes to avoid a Yahoo
+request on every page view. The interface shows quote time and criteria.
+Click a mover to open its research view. This is a discovery list, not an
+exhaustive NSE ranking or a buy/sell recommendation. Prices can be delayed or
+unavailable. The endpoint is `GET /api/v1/market/movers`.
+
+The frontend uses a dark editorial hero and a clean market table, with
+responsive layouts informed by the supplied references. Yahoo data is used
+for personal research; licensing and a suitable market-data provider must be
+reviewed before a public release.
 
 ### My stocks
 

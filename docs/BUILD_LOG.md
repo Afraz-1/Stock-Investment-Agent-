@@ -286,3 +286,31 @@ project's GitHub `main` branch.
   app. Authentication and request protection are required before public
   deployment. No automatic schedule, trade execution, or investment signal
   was added.
+
+## Step 17 — Market movers and frontend design refresh
+
+- **Purpose:** Add a useful top-stocks discovery view and bring the visual
+  hierarchy closer to the supplied dark editorial and clean stock-list
+  references.
+- **Files:** `backend/app/services/market_data/movers.py`,
+  `backend/app/api/v1/market.py`, `backend/tests/test_market_movers.py`,
+  `backend/app/main.py`, `frontend/src/MarketOverview.tsx`,
+  `frontend/src/MarketOverview.css`, `frontend/src/theme.css`, and updates to
+  the existing frontend, `frontend/src/PriceChart.tsx`, README files, and this log.
+- **How it works:** A read-only Yahoo screener requests the leading positive
+  and negative daily moves among NSE equities with market cap of at least
+  ₹10,000 crore and day volume of at least 100,000 shares. The service rejects
+  incomplete or non-NSE quotes, keeps one latest trading date, sorts the
+  returned moves, and caches results for five minutes. The frontend displays
+  five gainers and five losers with price, percentage change, timestamp,
+  source, universe criteria, and a click-through to stock research. The page
+  gains a dark hero, more deliberate typography, and responsive list styling.
+  The chart loads as a separate JavaScript chunk after the main interface.
+- **Verification:** 61 backend tests passed. Offline mover tests check
+  filtering, sorting, stale dates, caching, empty data, and upstream failure.
+  The frontend build and lint passed. A live local request for 9 November
+  2026 returned five gainers and five losers; the website returned HTTP 200.
+  A browser preview surface was unavailable for visual inspection.
+- **Boundary:** These are Yahoo-sourced daily price movers within a declared
+  screen, not all NSE stocks or investment recommendations. Quotes may lag.
+  Yahoo's personal-use data source is not a public distribution plan.
