@@ -347,7 +347,7 @@ function App() {
             </NavLink>
             <NavLink to="/research">Stock research</NavLink>
             <NavLink to="/my-stocks">
-              My stocks{" "}
+              Watchlist{" "}
               <span className="site-nav-count">{watchlist.length}</span>
             </NavLink>
           </nav>
