@@ -55,6 +55,23 @@ export interface StoredPriceHistory {
   unavailable_reason: "no_data" | null;
 }
 
+export interface WatchlistEntry {
+  id: number;
+  security: SecurityKey;
+  legal_name: string;
+  isin: string | null;
+  saved_price_count: number;
+  latest_saved_day: string | null;
+  added_at: string;
+}
+
+export interface RefreshResult {
+  security: SecurityKey;
+  start: string;
+  end: string;
+  bars_received: number;
+}
+
 export class ApiError extends Error {
   status: number;
 
@@ -64,8 +81,12 @@ export class ApiError extends Error {
   }
 }
 
-async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(path, { signal });
+async function getJson<T>(
+  path: string,
+  signal?: AbortSignal,
+  init?: RequestInit,
+): Promise<T> {
+  const response = await fetch(path, { ...init, signal });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     const detail =
@@ -77,8 +98,20 @@ async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+async function sendJson<T>(path: string, body?: object): Promise<T> {
+  return getJson<T>(path, undefined, {
+    method: "POST",
+    headers: body ? { "Content-Type": "application/json" } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
 function listingPath(security: SecurityKey): string {
   return `/api/v1/stocks/${encodeURIComponent(security.exchange_code)}/${encodeURIComponent(security.symbol)}`;
+}
+
+function watchlistPath(security: SecurityKey): string {
+  return `/api/v1/watchlist/${encodeURIComponent(security.exchange_code)}/${encodeURIComponent(security.symbol)}`;
 }
 
 export function searchStocks(
@@ -109,5 +142,47 @@ export function getPrices(
   return getJson(
     `${listingPath(security)}/${kind}?start=${start}&end=${end}`,
     signal,
+  );
+}
+
+export function getWatchlist(signal?: AbortSignal): Promise<WatchlistEntry[]> {
+  return getJson("/api/v1/watchlist", signal);
+}
+
+export function addToWatchlist(
+  security: SecurityKey,
+  legalName: string,
+  isin: string | null,
+): Promise<WatchlistEntry> {
+  return sendJson("/api/v1/watchlist", {
+    ...security,
+    legal_name: legalName,
+    isin,
+  });
+}
+
+export async function removeFromWatchlist(
+  security: SecurityKey,
+): Promise<void> {
+  const response = await fetch(watchlistPath(security), {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    const detail =
+      typeof body?.detail === "string"
+        ? body.detail
+        : `Request failed (${response.status})`;
+    throw new ApiError(response.status, detail);
+  }
+}
+
+export function refreshWatchlistPrices(
+  security: SecurityKey,
+  start: string,
+  end: string,
+): Promise<RefreshResult> {
+  return sendJson(
+    `${watchlistPath(security)}/refresh-prices?start=${start}&end=${end}`,
   );
 }

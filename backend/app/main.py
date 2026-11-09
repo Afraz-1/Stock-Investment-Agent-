@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.api.v1.stocks import router as stocks_router
+from app.api.v1.watchlist import router as watchlist_router
 from app.core.config import Settings
 from app.db.connection import create_database_engine, database_is_ready
 from app.db.session import create_session_factory
@@ -37,6 +38,7 @@ app = FastAPI(
 )
 app.state.session_factory = create_session_factory(engine)
 app.include_router(stocks_router)
+app.include_router(watchlist_router)
 
 
 @app.exception_handler(MarketDataError)

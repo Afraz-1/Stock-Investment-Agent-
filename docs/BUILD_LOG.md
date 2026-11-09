@@ -258,3 +258,31 @@ project's GitHub `main` branch.
 - **Boundary:** This is a personal local research interface. Saved bars still
   require the manual import command. It does not predict returns, recommend
   trades, access INDmoney, or support public users yet.
+
+## Step 16 — My stocks and on-demand price saving
+
+- **Purpose:** Add more listings from the website and save a selected range of
+  historical prices without using the registration and import commands.
+- **Files:** `backend/app/models/watchlist_item.py`, Alembic revision
+  `20261109_0004`, `backend/app/api/v1/watchlist.py`, route registration in
+  `backend/app/main.py`, `backend/tests/test_watchlist_routes.py`,
+  `frontend/src/api.ts`, `frontend/src/App.tsx`, `frontend/src/App.css`, and
+  the README files.
+- **How it works:** A watchlist row points to a registered security. The add
+  route verifies the exact listing with the provider, then reuses the existing
+  registration service and saves watchlist membership. The user checks the
+  legal company name and optional ISIN before submitting. The refresh route uses the existing
+  ingestion service and commits at most 366 days of Yahoo price bars. Repeat
+  refreshes upsert instead of duplicating daily rows. Removing a watchlist row
+  retains the underlying company, listing, and saved history. The migration
+  backfills existing registered listings into the watchlist.
+- **Verification:** 58 backend tests passed; the new offline API tests cover
+  add, repeat add, exchange identity, refresh, idempotency, removal, retained
+  prices, invalid input, and provider failure. The React build, lint, and
+  formatting checks passed. Alembic reached `20261109_0004` with no schema
+  drift. A live local request showed NSE:TCS in the watchlist with five saved
+  days; refreshing one day received one bar and still left five saved rows.
+- **Boundary:** These write routes are only for the loopback-hosted personal
+  app. Authentication and request protection are required before public
+  deployment. No automatic schedule, trade execution, or investment signal
+  was added.

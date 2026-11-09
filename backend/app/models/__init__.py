@@ -5,5 +5,6 @@ from app.models.company import Company
 from app.models.daily_price import DailyPrice
 from app.models.exchange import Exchange
 from app.models.security import Security
+from app.models.watchlist_item import WatchlistItem
 
-__all__ = ["Base", "Company", "DailyPrice", "Exchange", "Security"]
+__all__ = ["Base", "Company", "DailyPrice", "Exchange", "Security", "WatchlistItem"]

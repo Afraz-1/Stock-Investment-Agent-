@@ -18,8 +18,10 @@ import {
   LoaderCircle,
   Menu,
   Search,
+  Star,
   ShieldCheck,
   TrendingUp,
+  Trash2,
   X,
 } from "lucide-react";
 import {
@@ -33,8 +35,12 @@ import {
 } from "recharts";
 import {
   ApiError,
+  addToWatchlist,
   getPrices,
   getProfile,
+  getWatchlist,
+  refreshWatchlistPrices,
+  removeFromWatchlist,
   searchStocks,
   type CompanyProfile,
   type PriceBar,
@@ -42,6 +48,7 @@ import {
   type SearchResult,
   type SecurityKey,
   type StoredPriceHistory,
+  type WatchlistEntry,
 } from "./api";
 import "./App.css";
 
@@ -216,6 +223,28 @@ function App() {
   const [priceSource, setPriceSource] = useState<PriceSource>("live");
   const [showDescription, setShowDescription] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [watchlist, setWatchlist] = useState<WatchlistEntry[]>([]);
+  const [watchlistLoading, setWatchlistLoading] = useState(true);
+  const [watchlistBusy, setWatchlistBusy] = useState<string | null>(null);
+  const [watchlistError, setWatchlistError] = useState<string | null>(null);
+  const [watchlistMessage, setWatchlistMessage] = useState<string | null>(null);
+  const [legalName, setLegalName] = useState("");
+  const [isin, setIsin] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getWatchlist(controller.signal)
+      .then((items) => {
+        if (!controller.signal.aborted) setWatchlist(items);
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) setWatchlistError(errorMessage(error));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setWatchlistLoading(false);
+      });
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -226,7 +255,11 @@ function App() {
       getPrices(selected, start, end, true, controller.signal),
     ]).then(([profileResult, liveResult, savedResult]) => {
       if (controller.signal.aborted) return;
-      if (profileResult.status === "fulfilled") setProfile(profileResult.value);
+      if (profileResult.status === "fulfilled") {
+        setProfile(profileResult.value);
+        setLegalName((current) => current || profileResult.value.company_name);
+        setIsin((current) => current || profileResult.value.isin || "");
+      }
       if (liveResult.status === "fulfilled")
         setLive(liveResult.value as PriceHistory);
       else setLiveError(errorMessage(liveResult.reason));
@@ -267,18 +300,84 @@ function App() {
     }
   }
 
-  function chooseStock(result: SearchResult) {
-    setSelected(result.security);
+  function chooseStock(security: SecurityKey) {
+    setSelected(security);
     setLoading(true);
     setLiveError(null);
     setSavedError(null);
     setProfile(null);
     setLive(null);
     setSaved(null);
-    setQuery(result.security.symbol);
+    setQuery(security.symbol);
     setResults([]);
     setPriceSource("live");
     setShowDescription(false);
+    setLegalName("");
+    setIsin("");
+    setWatchlistMessage(null);
+    setWatchlistError(null);
+    setMobileMenu(false);
+  }
+
+  async function addCurrentStock(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!legalName.trim()) {
+      setWatchlistError("Enter the confirmed legal name.");
+      return;
+    }
+    setWatchlistBusy("add");
+    setWatchlistError(null);
+    setWatchlistMessage(null);
+    try {
+      await addToWatchlist(selected, legalName.trim(), isin.trim() || null);
+      setWatchlist(await getWatchlist());
+      setWatchlistMessage(
+        `${selected.exchange_code}:${selected.symbol} added to My stocks.`,
+      );
+    } catch (error) {
+      setWatchlistError(errorMessage(error));
+    } finally {
+      setWatchlistBusy(null);
+    }
+  }
+
+  async function removeTrackedStock(security: SecurityKey) {
+    setWatchlistBusy(`remove:${security.exchange_code}:${security.symbol}`);
+    setWatchlistError(null);
+    setWatchlistMessage(null);
+    try {
+      await removeFromWatchlist(security);
+      setWatchlist(await getWatchlist());
+      setWatchlistMessage(
+        `${security.exchange_code}:${security.symbol} removed from My stocks. Saved prices remain in PostgreSQL.`,
+      );
+    } catch (error) {
+      setWatchlistError(errorMessage(error));
+    } finally {
+      setWatchlistBusy(null);
+    }
+  }
+
+  async function refreshCurrentStock() {
+    setWatchlistBusy("refresh");
+    setWatchlistError(null);
+    setWatchlistMessage(null);
+    const { start, end } = dateWindow(rangeDays);
+    try {
+      const result = await refreshWatchlistPrices(selected, start, end);
+      const updated = await getPrices(selected, start, end, true);
+      setSaved(updated as StoredPriceHistory);
+      setSavedError(null);
+      setPriceSource("saved");
+      setWatchlist(await getWatchlist());
+      setWatchlistMessage(
+        `Received ${result.bars_received} daily bars for ${selected.exchange_code}:${selected.symbol}. The saved chart is updated.`,
+      );
+    } catch (error) {
+      setWatchlistError(errorMessage(error));
+    } finally {
+      setWatchlistBusy(null);
+    }
   }
 
   function chooseRange(days: number) {
@@ -305,6 +404,11 @@ function App() {
   const companyName =
     profile?.company_name ?? `${selected.symbol} on ${selected.exchange_code}`;
   const activeError = priceSource === "live" ? liveError : savedError;
+  const selectedTracked = watchlist.find(
+    (item) =>
+      item.security.exchange_code === selected.exchange_code &&
+      item.security.symbol === selected.symbol,
+  );
 
   return (
     <div className="app-shell">
@@ -331,9 +435,13 @@ function App() {
             <LineChartIcon size={18} /> Stock explorer{" "}
             <span className="nav-active-dot" />
           </div>
-          <div className="nav-item nav-future">
-            <Layers3 size={18} /> Screeners <span>Next</span>
-          </div>
+          <a
+            className="nav-item nav-link"
+            href="#my-stocks"
+            onClick={() => setMobileMenu(false)}
+          >
+            <Star size={18} /> My stocks <span>{watchlist.length}</span>
+          </a>
           <div className="nav-item nav-future">
             <BookOpen size={18} /> Research reports <span>Later</span>
           </div>
@@ -431,7 +539,7 @@ function App() {
                   <button
                     key={`${result.security.exchange_code}:${result.security.symbol}`}
                     type="button"
-                    onClick={() => chooseStock(result)}
+                    onClick={() => chooseStock(result.security)}
                   >
                     <span className="result-symbol">
                       {result.security.symbol.slice(0, 2)}
@@ -482,6 +590,154 @@ function App() {
               >
                 View source <ExternalLink size={15} />
               </a>
+            )}
+          </section>
+
+          <section
+            id="my-stocks"
+            className="watchlist-card card"
+            aria-label="My stocks"
+          >
+            <div className="watchlist-header">
+              <div>
+                <span className="section-eyebrow">PERSONAL RESEARCH LIST</span>
+                <h3>
+                  My stocks <span>{watchlist.length}</span>
+                </h3>
+                <p>
+                  Keep the listings you want to follow and choose when to save
+                  their daily prices.
+                </p>
+              </div>
+              <Star size={21} strokeWidth={1.6} />
+            </div>
+            <div className="watchlist-layout">
+              <div className="watchlist-items">
+                {watchlistLoading ? (
+                  <div className="watchlist-empty">Loading your stocks...</div>
+                ) : watchlist.length === 0 ? (
+                  <div className="watchlist-empty">
+                    No tracked stocks yet. Search for a listing above, then add
+                    it here.
+                  </div>
+                ) : (
+                  watchlist.map((item) => (
+                    <div className="watchlist-row" key={item.id}>
+                      <button
+                        type="button"
+                        className="watchlist-select"
+                        onClick={() => chooseStock(item.security)}
+                        aria-label={`Explore ${item.security.exchange_code}:${item.security.symbol}`}
+                      >
+                        <span className="watchlist-symbol">
+                          {item.security.symbol.slice(0, 2)}
+                        </span>
+                        <span className="watchlist-company">
+                          <strong>{item.legal_name}</strong>
+                          <small>
+                            {item.security.exchange_code}:{item.security.symbol}{" "}
+                            · {item.saved_price_count} saved days
+                            {item.latest_saved_day
+                              ? ` · through ${shortDate(item.latest_saved_day)}`
+                              : ""}
+                          </small>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        className="watchlist-remove icon-button"
+                        onClick={() => removeTrackedStock(item.security)}
+                        disabled={watchlistBusy !== null}
+                        aria-label={`Remove ${item.security.exchange_code}:${item.security.symbol} from My stocks`}
+                        title="Remove from My stocks; saved prices stay in PostgreSQL"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="watchlist-action">
+                <span className="section-eyebrow">SELECTED LISTING</span>
+                <strong>
+                  {selected.exchange_code}:{selected.symbol}
+                </strong>
+                {watchlistLoading ? (
+                  <p>Checking your saved list...</p>
+                ) : selectedTracked ? (
+                  <>
+                    <p>
+                      Save or update up to one year of daily prices for the
+                      selected chart range. Existing rows are refreshed safely.
+                    </p>
+                    <button
+                      type="button"
+                      className="watchlist-primary"
+                      onClick={refreshCurrentStock}
+                      disabled={watchlistBusy !== null}
+                    >
+                      {watchlistBusy === "refresh" ? (
+                        <LoaderCircle className="spin" size={15} />
+                      ) : (
+                        <Database size={15} />
+                      )}
+                      Save {rangeLabel} price history
+                    </button>
+                  </>
+                ) : profile ? (
+                  <form onSubmit={addCurrentStock}>
+                    <label htmlFor="legal-name">
+                      Confirm legal company name
+                    </label>
+                    <input
+                      id="legal-name"
+                      value={legalName}
+                      onChange={(event) => setLegalName(event.target.value)}
+                      maxLength={255}
+                      required
+                    />
+                    <label htmlFor="listing-isin">ISIN (optional)</label>
+                    <input
+                      id="listing-isin"
+                      value={isin}
+                      onChange={(event) =>
+                        setIsin(event.target.value.toUpperCase())
+                      }
+                      maxLength={12}
+                      pattern="[A-Z0-9]{12}"
+                      placeholder="12-character ISIN"
+                    />
+                    <p>
+                      Check the legal name and ISIN against the NSE or BSE
+                      listing. Yahoo values are only a starting point.
+                    </p>
+                    <button
+                      type="submit"
+                      className="watchlist-primary"
+                      disabled={watchlistBusy !== null}
+                    >
+                      {watchlistBusy === "add" ? (
+                        <LoaderCircle className="spin" size={15} />
+                      ) : (
+                        <Star size={15} />
+                      )}
+                      Add to My stocks
+                    </button>
+                  </form>
+                ) : (
+                  <p>Choose a valid listing from search to add it.</p>
+                )}
+              </div>
+            </div>
+            {watchlistError && (
+              <div className="inline-alert" role="alert">
+                {watchlistError}
+              </div>
+            )}
+            {watchlistMessage && (
+              <div className="watchlist-message" role="status">
+                {watchlistMessage}
+              </div>
             )}
           </section>
 

@@ -5,7 +5,7 @@ The project is being built one step at a time so each part can be understood and
 See [the build log](docs/BUILD_LOG.md) for the purpose, files, and verification
 of each completed step.
 
-## Current local app (Step 15)
+## Current local app (Step 16)
 
 Start PostgreSQL, then run the API in one terminal:
 
@@ -30,6 +30,23 @@ inclusive date range; it never imports new rows. Register and import a stock
 with the Step 13 and 14 local commands below before expecting saved bars.
 The page starts with NSE:TCS as an example. If that listing is not registered,
 the saved tab will have no bars; live lookup can still work.
+
+### My stocks
+
+The website now includes a personal tracked-stocks list. Search for a listing,
+select it, check its legal company name and optional ISIN against the exchange
+listing, and use
+**Add to My stocks**. The API verifies that Yahoo recognizes the exact
+exchange/symbol before registering it locally. Select a tracked stock and
+press **Save 1M/3M/1Y price history** to import that chart range on demand.
+The saved-price tab and stored-day count then update. Removing a stock from
+My stocks removes only its watchlist membership; its company, security, and
+daily price rows remain in PostgreSQL. Re-adding it restores access to those
+saved rows. The Step 16 migration adds `watchlist_items` and initially tracks
+listings registered before this feature, including NSE:TCS on this machine.
+
+The watchlist and refresh routes are intended for the local personal app. They
+have no user authentication yet and must be secured before public deployment.
 
 For now this is a personal research app. It has no accounts, portfolio,
 recommendations, ML model, RAG, trade execution, or public deployment.
