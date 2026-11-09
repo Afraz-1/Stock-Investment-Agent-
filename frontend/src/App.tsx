@@ -43,6 +43,7 @@ import {
   type WatchlistEntry,
 } from "./api";
 import MarketOverview from "./MarketOverview";
+import MarketBenchmarks from "./MarketBenchmarks";
 import StockSearch from "./StockSearch";
 import "./App.css";
 import "./theme.css";
@@ -399,6 +400,7 @@ function App() {
                     </div>
                   </div>
                 </section>
+                <MarketBenchmarks />
                 <MarketOverview
                   onSelect={(security) => chooseStock(security, "/research")}
                 />

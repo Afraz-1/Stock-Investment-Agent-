@@ -19,6 +19,8 @@ stock selection, date ranges, source selection, and My stocks actions.
 `src/MarketOverview.tsx` renders timestamped NSE gainers and losers from the
 backend; its rows open the research view. `src/theme.css` supplies the page
 theme, while `src/MarketOverview.css` styles the market tables.
+`src/MarketBenchmarks.tsx` displays NIFTY 50 and SENSEX daily values from
+`GET /api/v1/market/benchmarks`, including the prior-bar move and date.
 `src/PriceChart.tsx` is loaded on demand, keeping the chart library out of
 the initial JavaScript bundle.
 `src/App.css` and `src/index.css` style the page. `vite.config.ts` forwards

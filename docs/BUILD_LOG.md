@@ -336,3 +336,26 @@ project's GitHub `main` branch.
   returned the app. A browser preview surface was unavailable for visual QA.
 - **Boundary:** The market movers remain a screened, timestamped Yahoo data
   set. This step changes navigation and layout, not stock ranking logic.
+
+## Step 19 — NIFTY 50 and SENSEX market benchmarks
+
+- **Purpose:** Put broad Indian market context above the top gainers and
+  losers on the default page.
+- **Files:** `backend/app/services/market_data/benchmarks.py`,
+  `backend/app/api/v1/market.py`, `backend/tests/test_market_benchmarks.py`,
+  `frontend/src/MarketBenchmarks.tsx`, `frontend/src/MarketBenchmarks.css`,
+  `frontend/src/api.ts`, `frontend/src/App.tsx`, the frontend route check,
+  and README files.
+- **How it works:** The backend asks Yahoo Finance for one month of daily
+  NIFTY 50 and SENSEX bars, compares the two latest available values for each,
+  and returns point and percentage changes with the latest bar date and source.
+  Each index can be unavailable independently. The combined response is
+  cached for five minutes. React displays the values as index points, with
+  source links and a note that the current daily bar may still change.
+- **Verification:** 64 backend tests passed, including offline calculations,
+  cache behavior, unavailable data, and endpoint shape. Alembic reported no
+  schema changes. The frontend build, lint, formatting, and route rendering
+  checks passed. The live local endpoint returned dated values for both
+  indices and the frontend returned HTTP 200.
+- **Boundary:** These are Yahoo daily index values, not live exchange feeds or
+  investment recommendations. No new database table or ML model was added.

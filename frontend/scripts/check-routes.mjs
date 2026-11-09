@@ -12,7 +12,7 @@ try {
   const routes = [
     [
       "/",
-      ["Invest with context", "The market, in motion"],
+      ["Invest with context", "Indian benchmarks", "The market, in motion"],
       ["Research the business", "PERSONAL RESEARCH LIST"],
     ],
     [

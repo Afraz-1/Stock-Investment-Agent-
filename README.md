@@ -5,7 +5,7 @@ The project is being built one step at a time so each part can be understood and
 See [the build log](docs/BUILD_LOG.md) for the purpose, files, and verification
 of each completed step.
 
-## Current local app (Step 17)
+## Current local app (Step 19)
 
 Start PostgreSQL, then run the API in one terminal:
 
@@ -32,6 +32,14 @@ The page starts with NSE:TCS as an example. If that listing is not registered,
 the saved tab will have no bars; live lookup can still work.
 
 ### Market overview
+
+The default page shows NIFTY 50 and SENSEX cards above the movers list.
+`GET /api/v1/market/benchmarks` returns the latest available Yahoo daily bar
+for each index, its previous available bar, point and percentage change, and
+the bar's date. The cards are index **points**, not rupee prices. The current
+day's daily bar can still change during market hours. Each index has an
+explicit unavailable state if its Yahoo data is missing; results are cached
+for five minutes.
 
 The landing section shows the five largest daily gainers and losers from a
 **screened NSE universe**, using Yahoo Finance quotes. The screen is limited

@@ -94,6 +94,23 @@ export interface MarketMovers {
   source_url: string;
 }
 
+export interface MarketBenchmark {
+  name: string;
+  symbol: string;
+  status: "available" | "unavailable";
+  as_of_day: string | null;
+  value: string | null;
+  previous_value: string | null;
+  change_points: string | null;
+  change_percent: string | null;
+  source_url: string;
+}
+
+export interface MarketBenchmarks {
+  retrieved_at: string;
+  benchmarks: MarketBenchmark[];
+}
+
 export class ApiError extends Error {
   status: number;
 
@@ -173,6 +190,12 @@ export function getWatchlist(signal?: AbortSignal): Promise<WatchlistEntry[]> {
 
 export function getMarketMovers(signal?: AbortSignal): Promise<MarketMovers> {
   return getJson("/api/v1/market/movers", signal);
+}
+
+export function getMarketBenchmarks(
+  signal?: AbortSignal,
+): Promise<MarketBenchmarks> {
+  return getJson("/api/v1/market/benchmarks", signal);
 }
 
 export function addToWatchlist(
