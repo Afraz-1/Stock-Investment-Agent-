@@ -5,6 +5,35 @@ The project is being built one step at a time so each part can be understood and
 See [the build log](docs/BUILD_LOG.md) for the purpose, files, and verification
 of each completed step.
 
+## Current local app (Step 15)
+
+Start PostgreSQL, then run the API in one terminal:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m alembic upgrade head
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+```
+
+Run the React frontend in a second terminal:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Open <http://127.0.0.1:5173/>. Search for an NSE or BSE listing, select it,
+and compare live Yahoo price history with rows saved in PostgreSQL. The saved
+tab reads `GET /api/v1/stocks/{exchange}/{symbol}/saved-prices` for the chosen
+inclusive date range; it never imports new rows. Register and import a stock
+with the Step 13 and 14 local commands below before expecting saved bars.
+The page starts with NSE:TCS as an example. If that listing is not registered,
+the saved tab will have no bars; live lookup can still work.
+
+For now this is a personal research app. It has no accounts, portfolio,
+recommendations, ML model, RAG, trade execution, or public deployment.
+
 ## Step 1: FastAPI foundation
 
 This step provides a small API with a liveness endpoint. It does not connect to a database

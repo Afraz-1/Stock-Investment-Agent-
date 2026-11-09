@@ -235,3 +235,26 @@ project's GitHub `main` branch.
   migration was needed.
 - **Boundary:** The command is local and manual. API routes still read Yahoo
   directly; there is no scheduler, recommendation, or trade execution.
+
+## Step 15 — Local React stock explorer and saved-price view
+
+- **Purpose:** Make the backend useful through a local website and show the
+  difference between prices fetched from Yahoo and prices stored in PostgreSQL.
+- **Files:** `frontend/` (React, TypeScript, Vite, Recharts, Lucide icons),
+  `backend/app/api/v1/stocks.py`,
+  `backend/app/services/market_data/schemas.py`,
+  `backend/tests/test_saved_price_routes.py`, and `README.md`.
+- **How it works:** Vite forwards `/api` requests to FastAPI during local
+  development. The page searches NSE/BSE listings, shows a company profile,
+  charts daily closing prices over 1M/3M/1Y, and switches between live Yahoo
+  data and saved database rows. The new read-only `saved-prices` endpoint looks
+  up one exact exchange/symbol listing and returns its Yahoo,
+  dividend-adjusted bars for an inclusive range, plus retrieval timestamps.
+  Missing registration returns 404; an empty range returns `no_data`.
+- **Verification:** 55 backend tests passed, frontend lint and production
+  build passed. Local HTTP checks returned the page, database readiness,
+  Yahoo profile and prices, and five saved TCS bars for 2–6 November 2026.
+  A visual browser preview was unavailable in this environment.
+- **Boundary:** This is a personal local research interface. Saved bars still
+  require the manual import command. It does not predict returns, recommend
+  trades, access INDmoney, or support public users yet.

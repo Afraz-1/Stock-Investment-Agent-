@@ -107,3 +107,16 @@ class PriceHistory(BaseModel):
         if days != sorted(set(days)):
             raise ValueError("price bars must have unique, ascending trading days")
         return self
+
+
+class StoredPriceHistory(BaseModel):
+    """A database snapshot for one provider and adjustment basis."""
+
+    security: SecurityKey
+    currency_code: str = Field(pattern=r"^[A-Z]{3}$")
+    provider: str = Field(min_length=1)
+    adjustment: Literal["raw", "split_adjusted", "dividend_adjusted", "unknown"]
+    bars: list[PriceBar]
+    oldest_retrieved_at: AwareDatetime | None = None
+    newest_retrieved_at: AwareDatetime | None = None
+    unavailable_reason: Literal["no_data"] | None = None
