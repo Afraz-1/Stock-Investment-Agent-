@@ -314,3 +314,25 @@ project's GitHub `main` branch.
 - **Boundary:** These are Yahoo-sourced daily price movers within a declared
   screen, not all NSE stocks or investment recommendations. Quotes may lag.
   Yahoo's personal-use data source is not a public distribution plan.
+
+## Step 18 — Separate pages and top navigation
+
+- **Purpose:** Make Market overview, Stock research, and My stocks distinct
+  pages, with Market overview opening first and navigation across the top.
+- **Files:** `frontend/src/main.tsx`, `frontend/src/App.tsx`,
+  `frontend/src/StockSearch.tsx`, `frontend/src/navigation.css`,
+  `frontend/scripts/check-routes.mjs`, `frontend/package.json`, package lock,
+  and `frontend/README.md`.
+- **How it works:** React Router reads the browser URL and renders one view:
+  `/` for market movers, `/research` for the company chart and profile, and
+  `/my-stocks` for the personal list and price saving. The sidebar is gone.
+  Top links show the active page; the search component is shared by research
+  and My stocks. Selecting a market mover or a saved stock opens research.
+  Selecting a search result on My stocks keeps that page open for adding it.
+  The URLs support direct visits and browser history.
+- **Verification:** Production build, lint, formatting, and route rendering
+  checks passed. Each route rendered its own content and excluded the other
+  page sections. Direct HTTP requests to all three local frontend URLs
+  returned the app. A browser preview surface was unavailable for visual QA.
+- **Boundary:** The market movers remain a screened, timestamped Yahoo data
+  set. This step changes navigation and layout, not stock ranking logic.
