@@ -21,6 +21,10 @@ backend; its rows open the research view. `src/theme.css` supplies the page
 theme, while `src/MarketOverview.css` styles the market tables.
 `src/MarketBenchmarks.tsx` displays NIFTY 50 and SENSEX daily values from
 `GET /api/v1/market/benchmarks`, including the prior-bar move and date.
+`src/CompanyFacts.tsx` displays available Yahoo valuation and 52-week facts
+from the selected listing's profile response, with explicit missing values.
+`src/FinancialResearch.tsx` displays dated annual statement rows and four
+backend-calculated metrics. Each metric has an expandable formula and inputs.
 `src/PriceChart.tsx` is loaded on demand, keeping the chart library out of
 the initial JavaScript bundle.
 `src/App.css` and `src/index.css` style the page. `vite.config.ts` forwards

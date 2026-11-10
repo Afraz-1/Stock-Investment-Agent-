@@ -1,0 +1,99 @@
+.company-facts {
+  padding: 22px 24px 17px;
+  margin-bottom: 18px;
+}
+.company-facts-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+.company-facts-heading h3 {
+  color: #1c3021;
+  font:
+    800 17px Manrope,
+    sans-serif;
+  margin: 5px 0 0;
+}
+.company-facts-heading a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #668045;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.company-facts-heading a:hover {
+  text-decoration: underline;
+}
+.company-facts-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  margin-top: 20px;
+  border: 1px solid #e7ece5;
+  border-radius: 9px;
+  overflow: hidden;
+}
+.company-facts-grid > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 15px 17px;
+  border-right: 1px solid #e7ece5;
+}
+.company-facts-grid > div:last-child {
+  border-right: 0;
+}
+.company-facts-grid span {
+  color: #7a8a7e;
+  font-size: 11px;
+  font-weight: 700;
+}
+.company-facts-grid strong {
+  color: #192c1f;
+  font:
+    800 clamp(15px, 1.5vw, 20px) Manrope,
+    sans-serif;
+  letter-spacing: -0.5px;
+  margin-top: 9px;
+  overflow-wrap: anywhere;
+}
+.company-facts-grid small {
+  color: #9ba99d;
+  font-size: 10px;
+  margin-top: 6px;
+}
+.company-facts > p {
+  color: #8b9a8e;
+  font-size: 10px;
+  line-height: 1.5;
+  margin: 14px 0 0;
+}
+@media (max-width: 980px) {
+  .company-facts-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .company-facts-grid > div:nth-child(2) {
+    border-right: 0;
+  }
+  .company-facts-grid > div:nth-child(-n + 2) {
+    border-bottom: 1px solid #e7ece5;
+  }
+}
+@media (max-width: 520px) {
+  .company-facts {
+    padding: 18px;
+  }
+  .company-facts-grid {
+    grid-template-columns: 1fr;
+  }
+  .company-facts-grid > div {
+    border-right: 0;
+    border-bottom: 1px solid #e7ece5;
+  }
+  .company-facts-grid > div:last-child {
+    border-bottom: 0;
+  }
+}

@@ -39,6 +39,16 @@ class SecuritySearchResult(BaseModel):
     source: MarketDataSource
 
 
+class CompanyFacts(BaseModel):
+    """Provider-reported valuation and price context; no inferred periods."""
+
+    market_cap: Decimal | None = Field(default=None, gt=0, allow_inf_nan=False)
+    trailing_pe: Decimal | None = Field(default=None, gt=0, allow_inf_nan=False)
+    price_to_book: Decimal | None = Field(default=None, gt=0, allow_inf_nan=False)
+    fifty_two_week_low: Decimal | None = Field(default=None, gt=0, allow_inf_nan=False)
+    fifty_two_week_high: Decimal | None = Field(default=None, gt=0, allow_inf_nan=False)
+
+
 class CompanyProfile(BaseModel):
     """Company facts available from a provider for one listing."""
 
@@ -52,6 +62,7 @@ class CompanyProfile(BaseModel):
     description: str | None = None
     isin: str | None = None
     currency_code: str | None = Field(default=None, pattern=r"^[A-Z]{3}$")
+    facts: CompanyFacts = Field(default_factory=CompanyFacts)
     source: MarketDataSource
 
 

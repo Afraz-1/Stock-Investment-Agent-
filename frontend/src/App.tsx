@@ -44,6 +44,8 @@ import {
 } from "./api";
 import MarketOverview from "./MarketOverview";
 import MarketBenchmarks from "./MarketBenchmarks";
+import CompanyFacts from "./CompanyFacts";
+import FinancialResearch from "./FinancialResearch";
 import StockSearch from "./StockSearch";
 import "./App.css";
 import "./theme.css";
@@ -465,6 +467,11 @@ function App() {
                   )}
                 </section>
 
+                <CompanyFacts profile={profile} loading={loading} />
+                <FinancialResearch
+                  key={`${selected.exchange_code}:${selected.symbol}`}
+                  security={selected}
+                />
                 <div className="dashboard-grid">
                   <section className="price-card card">
                     <div className="section-heading">

@@ -23,6 +23,56 @@ export interface CompanyProfile extends SearchResult {
   sector: string | null;
   industry: string | null;
   description: string | null;
+  facts: CompanyFacts;
+}
+
+export interface CompanyFacts {
+  market_cap: string | null;
+  trailing_pe: string | null;
+  price_to_book: string | null;
+  fifty_two_week_low: string | null;
+  fifty_two_week_high: string | null;
+}
+
+export interface AnnualFinancialPeriod {
+  period_start: string | null;
+  period_end: string;
+  frequency: "annual";
+  accounting_basis: "unknown";
+  original_unit_scale: "ones";
+  revenue: string | null;
+  operating_income: string | null;
+  net_income: string | null;
+  operating_cash_flow: string | null;
+  capital_expenditure: string | null;
+}
+
+export interface AnnualFinancialStatements {
+  security: SecurityKey;
+  currency_code: string | null;
+  sector: string | null;
+  periods: AnnualFinancialPeriod[];
+  unavailable_reason: "no_data" | "currency_unknown" | null;
+  source: DataSource;
+}
+
+export interface FinancialMetric {
+  key: string;
+  label: string;
+  status:
+    "available" | "missing_data" | "not_meaningful" | "sector_not_supported";
+  value: string | null;
+  unit: "percent" | "currency";
+  period_end: string | null;
+  formula: string;
+  formula_version: "1";
+  inputs: { field: string; period_end: string; value: string }[];
+  calculated_at: string;
+}
+
+export interface FinancialResearch {
+  statements: AnnualFinancialStatements;
+  metrics: FinancialMetric[];
 }
 
 export interface PriceBar {
@@ -168,6 +218,13 @@ export function getProfile(
   signal?: AbortSignal,
 ): Promise<CompanyProfile> {
   return getJson(`${listingPath(security)}/profile`, signal);
+}
+
+export function getFinancialResearch(
+  security: SecurityKey,
+  signal?: AbortSignal,
+): Promise<FinancialResearch> {
+  return getJson(`${listingPath(security)}/annual-financials`, signal);
 }
 
 export function getPrices(

@@ -11,6 +11,7 @@ from app.main import app
 from app.services.market_data.provider import MarketDataError, MarketDataProvider
 from app.services.market_data.schemas import (
     CompanyProfile,
+    CompanyFacts,
     MarketDataSource,
     PriceBar,
     PriceHistory,
@@ -46,6 +47,7 @@ class FakeProvider(MarketDataProvider):
             security=security,
             company_name="Tata Consultancy Services",
             country_code="IN",
+            facts=CompanyFacts(market_cap=Decimal("1000000000000"), trailing_pe=Decimal("20.5")),
             source=self._source(),
         )
 
@@ -104,6 +106,7 @@ def test_profile_uses_exact_listing_and_returns_404(fake_provider: FakeProvider)
     response = client.get("/api/v1/stocks/NSE/tcs/profile")
     assert response.status_code == 200
     assert response.json()["security"]["symbol"] == "TCS"
+    assert response.json()["facts"]["trailing_pe"] == "20.5"
     assert fake_provider.calls[-1] == (
         "profile", SecurityKey(exchange_code="NSE", symbol="TCS")
     )

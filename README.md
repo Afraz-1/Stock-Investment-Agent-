@@ -5,7 +5,7 @@ The project is being built one step at a time so each part can be understood and
 See [the build log](docs/BUILD_LOG.md) for the purpose, files, and verification
 of each completed step.
 
-## Current local app (Step 19)
+## Current local app (Step 22)
 
 Start PostgreSQL, then run the API in one terminal:
 
@@ -26,8 +26,8 @@ npm run dev
 Open <http://127.0.0.1:5173/>. Search for an NSE or BSE listing, select it,
 and compare live Yahoo price history with rows saved in PostgreSQL. The saved
 tab reads `GET /api/v1/stocks/{exchange}/{symbol}/saved-prices` for the chosen
-inclusive date range; it never imports new rows. Register and import a stock
-with the Step 13 and 14 local commands below before expecting saved bars.
+inclusive date range; it never imports new rows. Use My stocks to add a listing
+and save its price history; the Step 13 and 14 commands remain optional.
 The page starts with NSE:TCS as an example. If that listing is not registered,
 the saved tab will have no bars; live lookup can still work.
 
@@ -57,6 +57,33 @@ The frontend uses a dark editorial hero and a clean market table, with
 responsive layouts informed by the supplied references. Yahoo data is used
 for personal research; licensing and a suitable market-data provider must be
 reviewed before a public release.
+
+### Company facts
+
+Stock research now shows Yahoo-reported market capitalization, trailing P/E,
+price to book, and 52-week low/high. These fields are returned with the
+existing `GET /api/v1/stocks/{exchange}/{symbol}/profile` response, so the
+frontend does not make another provider request. The adapter keeps missing,
+non-finite, non-positive, or inconsistent values unavailable. The snapshot
+shows retrieval time and source; Yahoo does not supply verified reporting
+periods for these facts, so check company filings before relying on them.
+
+### Annual financials and derived metrics
+
+Stock research now includes up to three annual income and cash-flow statement
+columns from `GET /api/v1/stocks/{exchange}/{symbol}/annual-financials`.
+It displays revenue, operating income, net income, operating cash flow, and
+capital expenditure in the statement currency. The response keeps the annual
+period end and marks unknown period starts, publication dates, and accounting
+basis explicitly. The source is Yahoo Finance, cached for fifteen minutes.
+
+The backend calculates operating margin, net margin, year-over-year revenue
+growth, and free cash flow from the normalized rows. Each result includes the
+formula, input values and period ends, calculation time, and an unavailable
+reason when needed. Free cash flow is operating cash flow plus Yahoo's negative
+capital expenditure outflow. Generic metrics are not calculated for Financial
+Services listings. Figures are educational and must be checked against company
+filings before investment decisions.
 
 ### My stocks
 

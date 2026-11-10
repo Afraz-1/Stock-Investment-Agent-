@@ -359,3 +359,67 @@ project's GitHub `main` branch.
   indices and the frontend returned HTTP 200.
 - **Boundary:** These are Yahoo daily index values, not live exchange feeds or
   investment recommendations. No new database table or ML model was added.
+
+## Step 20 — Company facts in Stock research
+
+- **Purpose:** Add basic valuation and price context to the research page.
+- **Files:** `backend/app/services/market_data/schemas.py`,
+  `backend/app/services/market_data/yahoo.py`, the Yahoo and route tests,
+  `frontend/src/api.ts`, `frontend/src/CompanyFacts.tsx`,
+  `frontend/src/CompanyFacts.css`, `frontend/src/App.tsx`, the route check,
+  and README files.
+- **How it works:** The existing profile request maps Yahoo's market cap,
+  trailing P/E, price to book, and 52-week low/high into a typed `facts`
+  object. Invalid or missing values become null, and a reversed 52-week
+  range is omitted. The frontend shows each value or "Unavailable", the
+  provider source, and retrieval time. It labels market cap in crore for
+  INR listings and states that reporting periods are unverified.
+- **Verification:** 65 backend tests passed, covering valid, missing, and
+  invalid fact mapping and the profile API shape. Alembic found no schema
+  changes. Frontend build, lint, formatting, and route checks passed. The
+  local TCS profile returned all five mapped fields, and `/research`
+  returned HTTP 200.
+- **Boundary:** These are provider-reported facts, not our own fundamental
+  calculations or an investment recommendation. No ML or RAG was added.
+
+## Step 21 — Annual financial statement normalization
+
+- **Purpose:** Give Stock research dated income and cash-flow observations
+  that can support later fundamental analysis.
+- **Files:** `backend/app/services/market_data/financials.py`,
+  `backend/app/api/v1/stocks.py`, `backend/tests/test_financial_research.py`,
+  `frontend/src/api.ts`, `frontend/src/FinancialResearch.tsx`,
+  `frontend/src/FinancialResearch.css`, and `frontend/src/App.tsx`.
+- **How it works:** For an exact NSE/BSE listing, the service checks Yahoo's
+  symbol and equity type, requires a statement currency, and reads annual
+  income and cash-flow tables. It maps five named rows for up to four recent
+  period ends. Values stay in original currency units in the API; the page
+  displays INR values in crore. Unknown period starts, publication dates,
+  and consolidated versus standalone basis remain explicitly unknown. A
+  bounded cache holds successful results for fifteen minutes.
+- **Verification:** Offline tests cover row mapping, exact listing identity,
+  missing currency, provenance, and cache expiry. The local TCS endpoint
+  returned dated annual rows.
+- **Boundary:** Yahoo statements may be incomplete or inconsistent. They are
+  not stored in PostgreSQL and should be checked against official filings.
+
+## Step 22 — Explainable annual financial metrics
+
+- **Purpose:** Turn the annual observations into a few reproducible metrics
+  without adding ML or an investment signal.
+- **Files:** `backend/app/services/market_data/fundamentals.py`, the
+  financial research route and tests, `frontend/src/FinancialResearch.tsx`,
+  the frontend route check, and README files.
+- **How it works:** The backend calculates operating margin, net margin,
+  adjacent-year revenue growth, and free cash flow. Every metric returns its
+  formula version, input observations and period ends, calculation time,
+  unit, and status. Zero or missing denominators, positive capex signs,
+  non-adjacent years, and Financial Services listings produce explicit
+  unavailable statuses. The UI shows both statement rows and expandable
+  formula details.
+- **Verification:** 70 backend tests passed, including calculation and
+  unsupported-sector cases. Alembic found no schema changes. Frontend build,
+  lint, formatting, and route checks passed. The live TCS route and research
+  page returned HTTP 200.
+- **Boundary:** These are simple historical calculations on Yahoo data. They
+  do not establish accounting basis or predict future returns.

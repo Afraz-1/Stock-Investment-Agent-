@@ -1,7 +1,7 @@
 """Personal-use Yahoo Finance adapter for Indian cash equities."""
 
 from datetime import date, datetime, timedelta, timezone
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from math import isnan
 
 import yfinance as yf
@@ -11,6 +11,7 @@ from yfinance.exceptions import YFTickerMissingError
 from app.services.market_data.provider import MarketDataError, MarketDataProvider
 from app.services.market_data.schemas import (
     CompanyProfile,
+    CompanyFacts,
     MarketDataSource,
     PriceBar,
     PriceHistory,
@@ -45,6 +46,30 @@ def _source(symbol: str) -> MarketDataSource:
         provider="yahoo_finance",
         retrieved_at=datetime.now(timezone.utc),
         url=f"https://finance.yahoo.com/quote/{symbol}/",
+    )
+
+
+def _positive(value: object) -> Decimal | None:
+    """Treat missing, non-finite, and non-meaningful provider metrics as absent."""
+
+    try:
+        number = Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError):
+        return None
+    return number if number.is_finite() and number > 0 else None
+
+
+def _company_facts(info: dict) -> CompanyFacts:
+    low = _positive(info.get("fiftyTwoWeekLow"))
+    high = _positive(info.get("fiftyTwoWeekHigh"))
+    if low is None or high is None or low > high:
+        low = high = None
+    return CompanyFacts(
+        market_cap=_positive(info.get("marketCap")),
+        trailing_pe=_positive(info.get("trailingPE")),
+        price_to_book=_positive(info.get("priceToBook")),
+        fifty_two_week_low=low,
+        fifty_two_week_high=high,
     )
 
 
@@ -110,6 +135,7 @@ class YahooMarketDataProvider(MarketDataProvider):
                 description=info.get("longBusinessSummary"),
                 isin=info.get("isin"),
                 currency_code=(info.get("currency") or "INR").upper(),
+                facts=_company_facts(info),
                 source=_source(symbol),
             )
         except YFTickerMissingError:

@@ -17,13 +17,13 @@ try {
     ],
     [
       "/research",
-      ["Research the business", "Market performance"],
+      ["Research the business", "Company facts", "Financial statements", "Market performance"],
       ["Invest with context", "PERSONAL RESEARCH LIST"],
     ],
     [
       "/my-stocks",
       ["PERSONAL RESEARCH LIST", "SELECTED LISTING"],
-      ["Market performance", "Invest with context"],
+      ["Company facts", "Market performance", "Invest with context"],
     ],
   ];
   for (const [path, present, absent] of routes) {

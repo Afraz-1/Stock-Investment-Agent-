@@ -4,6 +4,7 @@ from datetime import date, datetime, timezone
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -11,6 +12,8 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models import DailyPrice, Exchange, Security
 from app.services.market_data.provider import MarketDataProvider
+from app.services.market_data.financials import AnnualFinancialStatements, YahooAnnualFinancialsProvider
+from app.services.market_data.fundamentals import FinancialMetric, calculate_annual_metrics
 from app.services.market_data.schemas import (
     CompanyProfile,
     PriceBar,
@@ -22,6 +25,7 @@ from app.services.market_data.schemas import (
 from app.services.market_data.yahoo import YahooMarketDataProvider
 
 router = APIRouter(prefix="/api/v1/stocks", tags=["stocks"])
+_financials_provider = YahooAnnualFinancialsProvider()
 
 ExchangeCode = Literal["NSE", "BSE"]
 StockSymbol = Annotated[
@@ -39,6 +43,15 @@ def get_market_data_provider() -> MarketDataProvider:
     """Supply the provider; tests can replace this dependency without network calls."""
 
     return YahooMarketDataProvider()
+
+
+def get_financials_provider() -> YahooAnnualFinancialsProvider:
+    return _financials_provider
+
+
+class FinancialResearch(BaseModel):
+    statements: AnnualFinancialStatements
+    metrics: list[FinancialMetric]
 
 
 @router.get("/search", response_model=list[SecuritySearchResult])
@@ -67,6 +80,25 @@ def stock_profile(
     if profile is None:
         raise HTTPException(status_code=404, detail="Stock listing not found")
     return profile
+
+
+@router.get("/{exchange}/{symbol}/annual-financials", response_model=FinancialResearch)
+def annual_financials(
+    exchange: ExchangeCode,
+    symbol: StockSymbol,
+    provider: Annotated[YahooAnnualFinancialsProvider, Depends(get_financials_provider)],
+) -> FinancialResearch:
+    """Return sourced annual statement rows and reproducible derived metrics."""
+
+    statements = provider.get_annual(
+        SecurityKey(exchange_code=exchange, symbol=symbol.upper())
+    )
+    if statements is None:
+        raise HTTPException(status_code=404, detail="Stock listing not found")
+    return FinancialResearch(
+        statements=statements,
+        metrics=calculate_annual_metrics(statements),
+    )
 
 
 @router.get("/{exchange}/{symbol}/prices", response_model=PriceHistory)

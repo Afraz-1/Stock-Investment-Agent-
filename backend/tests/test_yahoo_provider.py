@@ -1,6 +1,7 @@
 """Offline checks for the Yahoo adapter's mapping and failure behavior."""
 
 from datetime import date
+from decimal import Decimal
 from types import SimpleNamespace
 
 import pandas as pd
@@ -46,6 +47,11 @@ def test_profile_requires_exact_listing(monkeypatch) -> None:
                 "country": "India",
                 "currency": "INR",
                 "sector": "Technology",
+                "marketCap": 8_900_000_000_000,
+                "trailingPE": 17.5,
+                "priceToBook": 7.25,
+                "fiftyTwoWeekLow": 1976.8,
+                "fiftyTwoWeekHigh": 3350.0,
             }
         )
 
@@ -55,6 +61,40 @@ def test_profile_requires_exact_listing(monkeypatch) -> None:
     assert profile.security.symbol == "TCS"
     assert profile.country_code == "IN"
     assert profile.sector == "Technology"
+    assert profile.facts.market_cap == 8_900_000_000_000
+    assert profile.facts.trailing_pe == 17.5
+    assert profile.facts.price_to_book == 7.25
+    assert profile.facts.fifty_two_week_low == Decimal("1976.8")
+    assert profile.facts.fifty_two_week_high == 3350
+
+
+def test_profile_marks_invalid_facts_unavailable(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "app.services.market_data.yahoo.yf.Ticker",
+        lambda symbol: SimpleNamespace(
+            info={
+                "symbol": symbol,
+                "quoteType": "EQUITY",
+                "longName": "Example Limited",
+                "marketCap": float("nan"),
+                "trailingPE": -3.1,
+                "priceToBook": 0,
+                "fiftyTwoWeekLow": 150,
+                "fiftyTwoWeekHigh": 100,
+            }
+        ),
+    )
+    profile = YahooMarketDataProvider().get_profile(
+        SecurityKey(exchange_code="NSE", symbol="EXAMPLE")
+    )
+    assert profile is not None
+    assert profile.facts.model_dump() == {
+        "market_cap": None,
+        "trailing_pe": None,
+        "price_to_book": None,
+        "fifty_two_week_low": None,
+        "fifty_two_week_high": None,
+    }
 
 
 def test_profile_rejects_different_listing(monkeypatch) -> None:
