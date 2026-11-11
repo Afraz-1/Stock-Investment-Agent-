@@ -25,6 +25,21 @@ try {
       ["PERSONAL RESEARCH LIST", "SELECTED LISTING"],
       ["Company facts", "Market performance", "Invest with context"],
     ],
+    [
+      "/compare",
+      ["Compare stocks", "RESEARCH TOOLS", "Compare"],
+      ["PERSONAL RESEARCH LIST", "Market performance", "Invest with context"],
+    ],
+    [
+      "/portfolio",
+      ["Portfolio &amp; journal", "PERSONAL WORKSPACE"],
+      ["Company facts", "Market performance", "Invest with context"],
+    ],
+    [
+      "/screen",
+      ["Stock screen", "DISCOVERY TOOL", "Minimum market cap"],
+      ["PERSONAL RESEARCH LIST", "Market performance", "Invest with context"],
+    ],
   ];
   for (const [path, present, absent] of routes) {
     const html = renderToString(

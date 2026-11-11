@@ -115,6 +115,42 @@ export interface WatchlistEntry {
   added_at: string;
 }
 
+export interface PortfolioTrade {
+  id: number;
+  security: SecurityKey;
+  trade_day: string;
+  side: "buy" | "sell";
+  quantity: string;
+  price: string;
+  fees: string;
+  note: string;
+  created_at: string;
+}
+
+export interface Holding {
+  security: SecurityKey;
+  quantity: string;
+  average_cost: string;
+  cost_basis: string;
+  realized_pnl: string;
+}
+
+export interface JournalEntry {
+  id: number;
+  security: SecurityKey;
+  thesis: string;
+  outcome: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PortfolioData {
+  holdings: Holding[];
+  trades: PortfolioTrade[];
+  journal: JournalEntry[];
+  realized_pnl: string;
+}
+
 export interface RefreshResult {
   security: SecurityKey;
   start: string;
@@ -129,6 +165,7 @@ export interface MarketMover {
   previous_close: string;
   change_percent: string;
   volume: number;
+  market_cap_inr: number;
   quote_at: string;
   source_url: string;
 }
@@ -141,6 +178,7 @@ export interface MarketMovers {
   min_day_volume: number;
   gainers: MarketMover[];
   losers: MarketMover[];
+  candidates: MarketMover[];
   source_url: string;
 }
 
@@ -291,4 +329,47 @@ export function refreshWatchlistPrices(
   return sendJson(
     `${watchlistPath(security)}/refresh-prices?start=${start}&end=${end}`,
   );
+}
+
+export function getPortfolio(signal?: AbortSignal): Promise<PortfolioData> {
+  return getJson("/api/v1/portfolio", signal);
+}
+
+export function recordTrade(
+  body: Omit<PortfolioTrade, "id" | "created_at">,
+): Promise<PortfolioTrade> {
+  return sendJson("/api/v1/portfolio/trades", body);
+}
+
+export async function removeTrade(id: number): Promise<void> {
+  const response = await fetch(`/api/v1/portfolio/trades/${id}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new ApiError(
+      response.status,
+      typeof body?.detail === "string"
+        ? body.detail
+        : `Request failed (${response.status})`,
+    );
+  }
+}
+
+export function addJournal(
+  security: SecurityKey,
+  thesis: string,
+): Promise<JournalEntry> {
+  return sendJson("/api/v1/portfolio/journal", { security, thesis });
+}
+
+export function updateJournalOutcome(
+  id: number,
+  outcome: string,
+): Promise<JournalEntry> {
+  return getJson(`/api/v1/portfolio/journal/${id}`, undefined, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ outcome }),
+  });
 }

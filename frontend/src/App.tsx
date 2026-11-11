@@ -1,4 +1,11 @@
-import { lazy, Suspense, useEffect, useState, type FormEvent } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+} from "react";
 import {
   Link,
   NavLink,
@@ -47,6 +54,9 @@ import MarketBenchmarks from "./MarketBenchmarks";
 import CompanyFacts from "./CompanyFacts";
 import FinancialResearch from "./FinancialResearch";
 import StockSearch from "./StockSearch";
+import Compare from "./Compare";
+import Portfolio from "./Portfolio";
+import StockScreen from "./StockScreen";
 import "./App.css";
 import "./theme.css";
 import "./navigation.css";
@@ -55,6 +65,19 @@ const PriceChart = lazy(() => import("./PriceChart"));
 
 type PriceSource = "live" | "saved";
 const initialSecurity: SecurityKey = { exchange_code: "NSE", symbol: "TCS" };
+function listingFromSearch(search: string): SecurityKey | null {
+  const params = new URLSearchParams(search);
+  const exchange = params.get("exchange")?.toUpperCase();
+  const symbol = params.get("symbol")?.toUpperCase();
+  if (
+    (exchange === "NSE" || exchange === "BSE") &&
+    symbol &&
+    /^[A-Z0-9][A-Z0-9&_.-]{0,31}$/.test(symbol)
+  ) {
+    return { exchange_code: exchange, symbol };
+  }
+  return null;
+}
 const ranges = [
   { label: "1M", days: 30 },
   { label: "3M", days: 90 },
@@ -126,12 +149,20 @@ function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const page = location.pathname;
-  const [selected, setSelected] = useState<SecurityKey>(initialSecurity);
+  const [selectedState, setSelected] = useState<SecurityKey>(initialSecurity);
+  const urlListing = useMemo(
+    () => listingFromSearch(location.search),
+    [location.search],
+  );
+  const selected = urlListing ?? selectedState;
   const [query, setQuery] = useState("TCS");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [searched, setSearched] = useState(false);
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [loadRevision, setLoadRevision] = useState(0);
   const [live, setLive] = useState<PriceHistory | null>(null);
   const [saved, setSaved] = useState<StoredPriceHistory | null>(null);
   const [liveError, setLiveError] = useState<string | null>(null);
@@ -164,7 +195,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (page === "/") return;
+    if (page !== "/research" && page !== "/my-stocks") return;
     const controller = new AbortController();
     const { start, end } = dateWindow(rangeDays);
     Promise.allSettled([
@@ -175,9 +206,10 @@ function App() {
       if (controller.signal.aborted) return;
       if (profileResult.status === "fulfilled") {
         setProfile(profileResult.value);
+        setProfileError(null);
         setLegalName((current) => current || profileResult.value.company_name);
         setIsin((current) => current || profileResult.value.isin || "");
-      }
+      } else setProfileError(errorMessage(profileResult.reason));
       if (liveResult.status === "fulfilled")
         setLive(liveResult.value as PriceHistory);
       else setLiveError(errorMessage(liveResult.reason));
@@ -197,7 +229,7 @@ function App() {
       setLoading(false);
     });
     return () => controller.abort();
-  }, [selected, rangeDays, page]);
+  }, [selected, rangeDays, page, loadRevision]);
 
   async function onSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -208,9 +240,11 @@ function App() {
     }
     setSearching(true);
     setSearchError(null);
+    setSearched(false);
     setResults([]);
     try {
       setResults(await searchStocks(trimmed));
+      setSearched(true);
     } catch (error) {
       setSearchError(errorMessage(error));
     } finally {
@@ -226,18 +260,24 @@ function App() {
     setLoading(true);
     setLiveError(null);
     setSavedError(null);
+    setProfileError(null);
     setProfile(null);
     setLive(null);
     setSaved(null);
     setQuery(security.symbol);
     setResults([]);
+    setSearched(false);
     setPriceSource("live");
     setShowDescription(false);
     setLegalName("");
     setIsin("");
     setWatchlistMessage(null);
     setWatchlistError(null);
-    navigate(destination);
+    const params = new URLSearchParams({
+      exchange: security.exchange_code,
+      symbol: security.symbol,
+    });
+    navigate(`${destination}?${params}`);
     window.scrollTo(0, 0);
   }
 
@@ -349,6 +389,9 @@ function App() {
               Market overview
             </NavLink>
             <NavLink to="/research">Stock research</NavLink>
+            <NavLink to="/compare">Compare</NavLink>
+            <NavLink to="/screen">Stock screen</NavLink>
+            <NavLink to="/portfolio">Portfolio</NavLink>
             <NavLink to="/my-stocks">
               Watchlist{" "}
               <span className="site-nav-count">{watchlist.length}</span>
@@ -362,6 +405,9 @@ function App() {
       </header>
       <main className="main-content routed-content">
         <Routes>
+          <Route path="/compare" element={<Compare />} />
+          <Route path="/screen" element={<StockScreen />} />
+          <Route path="/portfolio" element={<Portfolio />} />
           <Route
             path="/"
             element={
@@ -431,6 +477,7 @@ function App() {
                   results={results}
                   searching={searching}
                   error={searchError}
+                  searched={searched}
                   onSelect={(security) => chooseStock(security, "/research")}
                 />
                 <section
@@ -466,6 +513,21 @@ function App() {
                     </a>
                   )}
                 </section>
+
+                {profileError && (
+                  <div className="inline-alert" role="alert">
+                    Company profile unavailable: {profileError}{" "}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLoading(true);
+                        setLoadRevision((value) => value + 1);
+                      }}
+                    >
+                      Retry research data
+                    </button>
+                  </div>
+                )}
 
                 <CompanyFacts profile={profile} loading={loading} />
                 <FinancialResearch
@@ -790,6 +852,7 @@ function App() {
                   results={results}
                   searching={searching}
                   error={searchError}
+                  searched={searched}
                   onSelect={(security) => chooseStock(security, "/my-stocks")}
                 />
                 <section

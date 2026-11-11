@@ -113,4 +113,16 @@ def calculate_annual_metrics(statements: AnnualFinancialStatements) -> list[Fina
             calculation=ocf.value + capex.value if ocf and capex and capex.value <= 0 else None,
             meaningful=capex is not None and capex.value <= 0,
         ),
+        _metric(
+            "operating_cash_flow_margin",
+            "Operating cash flow margin",
+            "percent",
+            "operating_cash_flow / revenue * 100",
+            latest,
+            [ocf, revenue],
+            financial_sector=financial_sector,
+            calculation=percent(ocf.value / revenue.value)
+            if ocf and positive_revenue else None,
+            meaningful=positive_revenue,
+        ),
     ]

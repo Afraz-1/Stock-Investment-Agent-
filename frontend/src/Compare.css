@@ -1,0 +1,76 @@
+.compare-page {
+  color: #1b2a20;
+}
+.compare-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 18px;
+  padding: 22px;
+  margin-bottom: 22px;
+}
+.compare-form label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.compare-form input,
+.compare-form select {
+  border: 1px solid #d7e1d6;
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px;
+  color: #203126;
+}
+.compare-form input {
+  width: 130px;
+  text-transform: uppercase;
+}
+.compare-form button {
+  border: 0;
+  border-radius: 8px;
+  background: #233628;
+  color: white;
+  padding: 11px 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.compare-table-wrap {
+  overflow-x: auto;
+  padding: 10px 22px 22px;
+}
+.compare-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 650px;
+}
+.compare-table th,
+.compare-table td {
+  text-align: left;
+  border-bottom: 1px solid #e8ece7;
+  padding: 16px;
+  vertical-align: top;
+}
+.compare-table thead th {
+  color: #59723f;
+  font-size: 13px;
+}
+.compare-table tbody th {
+  width: 32%;
+  font-size: 13px;
+}
+.compare-table td {
+  width: 34%;
+  font-size: 13px;
+}
+.compare-error {
+  color: #a23430;
+  font-size: 13px;
+}
+.compare-note {
+  color: #68766b;
+  font-size: 13px;
+  line-height: 1.6;
+}

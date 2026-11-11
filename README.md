@@ -2,10 +2,10 @@
 
 EquityIQ is an investment research and education project for Indian equities.
 The project is being built one step at a time so each part can be understood and reviewed.
-See [the build log](docs/BUILD_LOG.md) for the purpose, files, and verification
-of each completed step.
+Local development notes are kept in the ignored `docs/` directory. The
+personal v1 guide there traces the frontend, API, and database flow.
 
-## Current local app (Step 22)
+## Current local app (Step 27)
 
 Start PostgreSQL, then run the API in one terminal:
 
@@ -77,9 +77,10 @@ capital expenditure in the statement currency. The response keeps the annual
 period end and marks unknown period starts, publication dates, and accounting
 basis explicitly. The source is Yahoo Finance, cached for fifteen minutes.
 
-The backend calculates operating margin, net margin, year-over-year revenue
-growth, and free cash flow from the normalized rows. Each result includes the
-formula, input values and period ends, calculation time, and an unavailable
+The backend calculates operating margin, net margin, operating cash flow margin,
+year-over-year revenue growth, and free cash flow from the normalized rows.
+Each result includes the formula, input values and period ends, calculation
+time, and an unavailable
 reason when needed. Free cash flow is operating cash flow plus Yahoo's negative
 capital expenditure outflow. Generic metrics are not calculated for Financial
 Services listings. Figures are educational and must be checked against company
@@ -102,8 +103,28 @@ listings registered before this feature, including NSE:TCS on this machine.
 The watchlist and refresh routes are intended for the local personal app. They
 have no user authentication yet and must be secured before public deployment.
 
-For now this is a personal research app. It has no accounts, portfolio,
-recommendations, ML model, RAG, trade execution, or public deployment.
+### Compare, portfolio, and stock screen
+
+The **Compare** tab puts two exact NSE/BSE listings side by side. It shows
+ninety-day closing-price change, Yahoo profile facts, annual ratios, observation
+periods, retrieval times, and per-request failures. It does not rank them.
+
+The **Portfolio** tab records manual buy/sell trades and dated journal entries
+in PostgreSQL. Open quantity and average cost are calculated from the trade
+ledger; a sell cannot exceed the quantity held at that date. A later outcome
+can be added to each thesis. These entries are not synchronized with INDmoney
+and do not place trades. Correct an incorrect trade with **Remove**; the API
+rejects removal if that would invalidate a later sell.
+
+The **Stock screen** tab filters the bounded Yahoo NSE candidate sample by
+market cap, volume, and daily change. It shows the sample size, quote day,
+retrieval time, and a research checklist for each candidate. Checklists are
+stored only in the current browser. The candidate sample is not the full NSE
+market and the screen does not recommend a purchase.
+
+This is still a local personal research app. It has no accounts, ML model,
+RAG, trade execution, broker connection, or public deployment. Yahoo data
+licensing must be reviewed before serving other users.
 
 ## Step 1: FastAPI foundation
 

@@ -67,12 +67,25 @@ def test_normalizes_annual_rows_and_calculates_metrics() -> None:
         "net_margin": Decimal("15.00"),
         "revenue_growth": Decimal("20.00"),
         "free_cash_flow": Decimal("20.0"),
+        "operating_cash_flow_margin": Decimal("20.83"),
     }
     assert metrics["revenue_growth"].formula_version == "1"
     assert [item.period_end for item in metrics["revenue_growth"].inputs] == [
         date(2026, 3, 31), date(2025, 3, 31)
     ]
     assert metrics["free_cash_flow"].unit == "currency"
+
+
+def test_cash_flow_margin_needs_cash_flow() -> None:
+    statements = YahooAnnualFinancialsProvider(ticker_factory=ticker).get_annual(KEY)
+    assert statements is not None
+
+    statements.periods[0].operating_cash_flow = None
+    metrics = {item.key: item for item in calculate_annual_metrics(statements)}
+    margin = metrics["operating_cash_flow_margin"]
+
+    assert margin.status == "missing_data"
+    assert margin.value is None
 
 
 def test_missing_currency_and_wrong_listing_are_explicit() -> None:
@@ -100,6 +113,7 @@ def test_metrics_mark_unsupported_or_invalid_inputs() -> None:
     statements.periods[0].capital_expenditure = Decimal("5")
     metrics = {item.key: item for item in calculate_annual_metrics(statements)}
     assert metrics["net_margin"].status == "not_meaningful"
+    assert metrics["operating_cash_flow_margin"].status == "not_meaningful"
     assert metrics["free_cash_flow"].status == "not_meaningful"
     assert metrics["net_margin"].value is None
 
@@ -120,6 +134,14 @@ def test_route_returns_periods_and_metric_inputs() -> None:
         assert body["statements"]["security"] == {"exchange_code": "NSE", "symbol": "TCS"}
         assert body["statements"]["periods"][0]["revenue"] == "120.0"
         assert body["metrics"][0]["inputs"][0]["field"] == "operating_income"
+        cash_margin = next(
+            metric for metric in body["metrics"]
+            if metric["key"] == "operating_cash_flow_margin"
+        )
+        assert cash_margin["value"] == "20.83"
+        assert [item["field"] for item in cash_margin["inputs"]] == [
+            "operating_cash_flow", "revenue"
+        ]
     finally:
         app.dependency_overrides.pop(get_financials_provider, None)
 

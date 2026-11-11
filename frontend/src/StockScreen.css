@@ -1,0 +1,97 @@
+.stock-screen {
+  color: #1a2d20;
+}
+.screen-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 20px;
+}
+.screen-controls label,
+.risk-notes {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #597257;
+}
+.screen-controls input,
+.screen-controls select,
+.risk-notes textarea {
+  border: 1px solid #d5e1d2;
+  border-radius: 8px;
+  background: white;
+  padding: 9px;
+  color: #203629;
+  font: inherit;
+}
+.screen-controls input {
+  width: 145px;
+}
+.screen-context {
+  font-size: 12px;
+  color: #6c7d6a;
+  line-height: 1.6;
+}
+.screen-table-wrap {
+  overflow-x: auto;
+  padding: 20px;
+}
+.screen-table-wrap table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.screen-table-wrap th,
+.screen-table-wrap td {
+  border-bottom: 1px solid #e7ebe3;
+  padding: 13px;
+  text-align: left;
+}
+.screen-table-wrap th {
+  color: #62785c;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.screen-table-wrap td small {
+  display: block;
+  color: #7e8b7b;
+  margin-top: 4px;
+}
+.screen-table-wrap button,
+.risk-review button {
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 14px;
+  background: #253c2b;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.risk-review {
+  padding: 24px;
+  margin-top: 20px;
+}
+.risk-review h2 {
+  margin: 0 0 10px;
+}
+.risk-review p {
+  color: #6b7c6b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.risk-question {
+  display: flex;
+  align-items: start;
+  gap: 10px;
+  margin: 13px 0;
+  font-size: 13px;
+}
+.risk-notes {
+  margin: 18px 0;
+}
+.risk-notes textarea {
+  min-height: 80px;
+  resize: vertical;
+}

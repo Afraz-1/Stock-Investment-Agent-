@@ -48,6 +48,7 @@ export default function FinancialResearch({
   const [data, setData] = useState<ResearchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [revision, setRevision] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -67,7 +68,7 @@ export default function FinancialResearch({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [security]);
+  }, [security, revision]);
 
   const statements = data?.statements;
   const periods = statements?.periods.slice(0, 3) ?? [];
@@ -96,6 +97,16 @@ export default function FinancialResearch({
       ) : error ? (
         <div className="financial-message" role="alert">
           {error}
+          <button
+            type="button"
+            onClick={() => {
+              setError(null);
+              setLoading(true);
+              setRevision((value) => value + 1);
+            }}
+          >
+            Retry annual statements
+          </button>
         </div>
       ) : !statements || periods.length === 0 ? (
         <div className="financial-message">
@@ -188,6 +199,17 @@ export default function FinancialResearch({
             .
           </p>
         </>
+      )}
+      {statements && (
+        <p className="financial-message">
+          Yahoo snapshot retrieved{" "}
+          {new Date(statements.source.retrieved_at).toLocaleString("en-IN", {
+            timeZone: "Asia/Kolkata",
+          })}
+          . Latest annual period ended{" "}
+          {statements.periods[0]?.period_end ?? "unknown"}; publication date and
+          accounting basis are unverified.
+        </p>
       )}
     </section>
   );

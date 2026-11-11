@@ -28,6 +28,7 @@ class MarketMover(BaseModel):
     previous_close: Decimal = Field(gt=0)
     change_percent: Decimal
     volume: int = Field(ge=0)
+    market_cap_inr: int = Field(ge=0)
     quote_at: AwareDatetime
     source_url: str
 
@@ -42,6 +43,7 @@ class MarketMovers(BaseModel):
     min_day_volume: int
     gainers: list[MarketMover]
     losers: list[MarketMover]
+    candidates: list[MarketMover]
     source_url: str = "https://finance.yahoo.com/screener/"
 
 
@@ -95,6 +97,7 @@ def _mover(quote: dict[str, Any]) -> MarketMover | None:
         previous_close=previous,
         change_percent=change,
         volume=volume,
+        market_cap_inr=market_cap,
         quote_at=datetime.fromtimestamp(quote_time, tz=timezone.utc),
         source_url=f"https://finance.yahoo.com/quote/{symbol}/",
     )
@@ -180,6 +183,7 @@ class YahooMarketMoversProvider:
                 min_day_volume=MIN_DAY_VOLUME,
                 gainers=gainers,
                 losers=losers,
+                candidates=sorted(current, key=lambda m: (m.market_cap_inr, m.change_percent), reverse=True),
             )
         except Exception as exc:
             raise MarketDataError("Yahoo market movers request failed") from exc

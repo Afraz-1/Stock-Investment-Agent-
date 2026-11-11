@@ -110,6 +110,7 @@ export default function MarketOverview({
   const [data, setData] = useState<MarketMovers | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [revision, setRevision] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -129,7 +130,7 @@ export default function MarketOverview({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, []);
+  }, [revision]);
 
   return (
     <section
@@ -166,6 +167,16 @@ export default function MarketOverview({
         <div className="market-error" role="alert">
           <strong>Market overview unavailable</strong>
           <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setError(null);
+              setLoading(true);
+              setRevision((value) => value + 1);
+            }}
+          >
+            Retry market data
+          </button>
         </div>
       ) : data ? (
         <div className="market-lists">
@@ -186,6 +197,9 @@ export default function MarketOverview({
 
       <div className="market-footnote">
         <span>
+          {data
+            ? `Trading day ${data.as_of_day}; retrieved ${quoteTime(data.retrieved_at)}. `
+            : ""}
           Universe: NSE equities screened by Yahoo with market cap ≥ ₹10,000
           crore and daily volume ≥ 1 lakh shares. Moves are versus previous
           close; quotes may be delayed. A price move is not a recommendation.

@@ -43,6 +43,8 @@ def test_sorts_valid_quotes_and_filters_old_or_out_of_universe() -> None:
     assert [m.security.symbol for m in result.gainers] == ["MOREUP", "UP"]
     assert [m.security.symbol for m in result.losers] == ["DOWN"]
     assert result.min_market_cap_inr == 100_000_000_000
+    assert [m.security.symbol for m in result.candidates] == ["MOREUP", "UP", "DOWN"]
+    assert result.candidates[0].market_cap_inr == 200_000_000_000
     assert calls == [False, True]
     assert provider.get_movers() is result
     assert calls == [False, True]

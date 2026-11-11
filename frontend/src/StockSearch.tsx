@@ -16,6 +16,7 @@ interface StockSearchProps {
   results: SearchResult[];
   searching: boolean;
   error: string | null;
+  searched: boolean;
 }
 
 export default function StockSearch({
@@ -26,6 +27,7 @@ export default function StockSearch({
   results,
   searching,
   error,
+  searched,
 }: StockSearchProps) {
   return (
     <div className="stock-search">
@@ -76,7 +78,13 @@ export default function StockSearch({
           ))}
         </div>
       )}
-      {!searching && !error && results.length === 0 && (
+      {!searching && !error && searched && results.length === 0 && (
+        <div className="search-hint" role="status">
+          <Info size={14} /> No matching NSE or BSE listings. Try a company name
+          or another symbol.
+        </div>
+      )}
+      {!searching && !error && !searched && (
         <div className="search-hint">
           <Info size={14} /> NSE and BSE listings stay separate.
         </div>
