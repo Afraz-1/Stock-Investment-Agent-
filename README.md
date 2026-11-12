@@ -1,6 +1,6 @@
 # EquityIQ
 
-EquityIQ is an investment research and education project for Indian equities.
+EquityIQ is a personal investment research and education project for Indian equities.
 The project is being built one step at a time so each part can be understood and reviewed.
 Local development notes are kept in the ignored `docs/` directory. The
 personal v1 guide there traces the frontend, API, and database flow.
